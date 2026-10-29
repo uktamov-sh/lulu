@@ -7914,6 +7914,21 @@
       "tr": "Kart beklerken « OK LuLu, izin ver » veya « OK LuLu, reddet » de. « OK LuLu » açık olmalı. Riskli veya uzun komutta ve birden çok kart beklerken izin verme reddedilir; reddetme her zaman çalışır. Mikrofonun duyduğu herkes yanıtlayabilir, o yüzden ortak odada kapalı tut.",
       "uz": "Karta kutayotganda «OK LuLu, ruxsat ber» yoki «OK LuLu, rad et» deng. «OK LuLu» yoqilgan boʻlishi kerak. Xavfli yoki uzun buyruqda va bir nechta karta kutayotganda ruxsat berilmaydi; rad etish har doim ishlaydi. Mikrofon eshitgan har kim javob berishi mumkin, shuning uchun umumiy xonada oʻchirib qoʻying.",
       "uz-yangi": "Karta kutayotganda «OK LuLu, ruxsat ber» yoki «OK LuLu, rad et» deng. «OK LuLu» yoqilgan bölişi kerak. Xavfli yoki uzun buyruqda va bir neçta karta kutayotganda ruxsat berilmaydi; rad etiş har doim işlaydi. Mikrofon eşitgan har kim javob berişi mumkin, şuning uçun umumiy xonada öçirib qöying."
+    },
+    "Read the card first, then answer.": {
+      "zh-Hans": "请先看卡片，再回答。",
+      "hi": "पहले कार्ड पढ़ें, फिर जवाब दें।",
+      "es": "Lee primero la tarjeta y luego responde.",
+      "ar": "اقرأ البطاقة أولًا ثم أجب.",
+      "fr": "Lis d’abord la carte, puis réponds.",
+      "bn": "আগে কার্ডটি পড়ুন, তারপর উত্তর দিন।",
+      "pt-BR": "Leia o cartão primeiro e depois responda.",
+      "ru": "Сначала прочитайте карточку, потом отвечайте.",
+      "id": "Baca kartunya dulu, baru jawab.",
+      "de": "Lies erst die Karte, dann antworte.",
+      "tr": "Önce kartı oku, sonra yanıtla.",
+      "uz": "Avval kartani oʻqing, keyin javob bering.",
+      "uz-yangi": "Avval kartani öqing, keyin javob bering."
     }
   }
 }

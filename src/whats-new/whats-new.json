@@ -2,6 +2,46 @@
   "about": "What's new, shown once in the island after LuLu updates itself (src/whats-new/). Every Windows and Linux release adds its entry here, in the 12 languages: 1 to 4 items, a short title and one line each, an icon from scripts/test-whats-new.py. python3 scripts/test-whats-new.py checks it.",
   "releases": [
     {
+      "version": "0.3.1",
+      "items": [
+        {
+          "icon": "shield",
+          "title": {
+            "en": "Voice answers read “don't”",
+            "zh-Hans": "语音回答能听懂“不要”",
+            "hi": "आवाज़ के जवाब “नहीं” समझते हैं",
+            "es": "La voz entiende “no”",
+            "ar": "الأوامر الصوتية تفهم «لا»",
+            "fr": "La voix comprend « ne pas »",
+            "bn": "ভয়েস উত্তর “না” বোঝে",
+            "pt-BR": "A voz entende “não”",
+            "ru": "Голос понимает «не»",
+            "id": "Jawaban suara paham “jangan”",
+            "de": "Die Stimme versteht „nicht“",
+            "tr": "Ses yanıtı “değil”i anlar",
+            "uz": "Ovozli javob «yoʻq»ni tushunadi",
+            "uz-yangi": "Ovozli javob «yöq»ni tuşunadi"
+          },
+          "detail": {
+            "en": "“Don't allow” or “не разрешаю” now counts as a deny, never as an allow.",
+            "zh-Hans": "“不要允许”或“не разрешаю”现在算作拒绝，绝不会变成允许。",
+            "hi": "“अनुमति मत दो” या “не разрешаю” अब अस्वीकार माना जाता है, कभी अनुमति नहीं।",
+            "es": "“No permitir” o “не разрешаю” cuenta ahora como denegar, nunca como permitir.",
+            "ar": "«لا تسمح» أو «не разрешаю» تُعدّ الآن رفضًا، ولا تُعدّ سماحًا أبدًا.",
+            "fr": "« Ne pas autoriser » ou « не разрешаю » compte désormais comme un refus, jamais comme une autorisation.",
+            "bn": "“অনুমতি দিয়ো না” বা “не разрешаю” এখন প্রত্যাখ্যান ধরা হয়, কখনও অনুমতি নয়।",
+            "pt-BR": "“Não permitir” ou “не разрешаю” agora conta como negar, nunca como permitir.",
+            "ru": "«Не разрешаю» и «don't allow» теперь считаются отказом, а не разрешением.",
+            "id": "“Jangan izinkan” atau “не разрешаю” kini dihitung sebagai tolak, tidak pernah izinkan.",
+            "de": "„Nicht erlauben“ oder „не разрешаю“ zählt jetzt als Ablehnen, nie als Erlauben.",
+            "tr": "“İzin verme” veya “не разрешаю” artık reddetme sayılır, asla izin değil.",
+            "uz": "«Ruxsat berma» yoki «не разрешаю» endi rad etish hisoblanadi, hech qachon ruxsat emas.",
+            "uz-yangi": "«Ruxsat berma» yoki «не разрешаю» endi rad etiş hisoblanadi, heç qaçon ruxsat emas."
+          }
+        }
+      ]
+    },
+    {
       "version": "0.3.0",
       "items": [
         {

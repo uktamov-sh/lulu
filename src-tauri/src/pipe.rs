@@ -235,10 +235,9 @@ async fn handle(app: AppHandle, mut pipe: impl Relay) {
     crate::recap::note_request(&app, &id, &payload);
     // The phone's card, if Telegram approvals are on: sent once the island has it on screen.
     let mut card = crate::telegram::prepare(&app, &payload);
-    if let Some((line, cut)) = crate::telegram::describe(&payload) {
-        let risky = cut || crate::explain::looks_risky(&line);
-        WAITING.lock().unwrap().push((id.clone(), risky));
-    }
+    // For the voice: only once the island has the card on screen (below).
+    let mut voice_card = crate::telegram::describe(&payload)
+        .map(|(tool, target, cut)| (id.clone(), !cut && crate::voice::approval::allow_ok(&tool, &target)));
     payload["request_id"] = json!(id);
     log::line(format!("hook PermissionRequest id={id}"));
     let _ = app.emit_to(WINDOW_LABEL, "hook", payload);
@@ -247,10 +246,13 @@ async fn handle(app: AppHandle, mut pipe: impl Relay) {
         if let Some(card) = card.take() {
             crate::telegram::offer(&app, &id, card);
         }
+        if let Some((id, allow_ok)) = voice_card.take() {
+            WAITING.lock().unwrap().push(Waiting { id, allow_ok, shown: std::time::Instant::now() });
+        }
     };
     let result = wait_for_decision(&id, &mut rx, ACK_TIMEOUT, DECISION_TIMEOUT, on_screen).await;
     app.state::<Pending>().0.lock().unwrap().remove(&id);
-    WAITING.lock().unwrap().retain(|(waiting, _)| waiting != &id);
+    WAITING.lock().unwrap().retain(|card| card.id != id);
     // However it ended, the phone's card says so (nothing to do when the phone answered it).
     if let Some(ending) = phone_ending(&result) {
         crate::telegram::settle(&app, &id, ending);
@@ -266,10 +268,21 @@ async fn handle(app: AppHandle, mut pipe: impl Relay) {
     pipe.finish();
 }
 
-/// Requests waiting for an answer that Allow / Deny can settle (not questions):
-/// the id, and whether Allow by voice is refused for it (a command that looks
-/// destructive, or one cut short).
-static WAITING: Mutex<Vec<(String, bool)>> = Mutex::new(Vec::new());
+/// A card on screen that Allow / Deny can settle (not a question), as the voice
+/// sees it: Allow by voice only where the request is plainly harmless
+/// (voice::approval::allow_ok) and the card has been up long enough to be read.
+struct Waiting {
+    id: String,
+    allow_ok: bool,
+    shown: std::time::Instant,
+}
+
+/// Only cards the island has confirmed on screen.
+static WAITING: Mutex<Vec<Waiting>> = Mutex::new(Vec::new());
+
+/// A card must be up this long before a voice can allow it: what was said
+/// can't have been about a card that has just replaced another.
+const VOICE_SETTLE: Duration = Duration::from_millis(1500);
 
 /// A card waits, and "OK LuLu, allow" may be about it.
 pub fn something_waits() -> bool {
@@ -280,8 +293,10 @@ pub fn something_waits() -> bool {
 #[derive(Debug, PartialEq, Eq)]
 pub enum VoiceResult {
     Answered,
-    /// Allow refused: the command looks destructive or was cut short.
+    /// Allow refused: not plainly harmless, or cut short.
     Risky,
+    /// Allow refused: the card has only just appeared.
+    TooSoon,
     Several,
     NothingWaiting,
 }
@@ -293,11 +308,14 @@ pub fn voice_answer(app: &AppHandle, allow: bool) -> VoiceResult {
         let waiting = WAITING.lock().unwrap();
         match waiting.as_slice() {
             [] => return VoiceResult::NothingWaiting,
-            [(id, risky)] => {
-                if allow && *risky {
+            [card] => {
+                if allow && !card.allow_ok {
                     return VoiceResult::Risky;
                 }
-                id.clone()
+                if allow && card.shown.elapsed() < VOICE_SETTLE {
+                    return VoiceResult::TooSoon;
+                }
+                card.id.clone()
             }
             _ => return VoiceResult::Several,
         }

@@ -247,6 +247,7 @@ fn answer_card(app: &AppHandle, text: &str) -> String {
     match crate::pipe::voice_answer(app, verdict == approval::Verdict::Allow) {
         VoiceResult::Answered => "✓".into(),
         VoiceResult::Risky => crate::i18n::t("This one looks risky: press Allow yourself."),
+        VoiceResult::TooSoon => crate::i18n::t("Read the card first, then answer."),
         VoiceResult::Several => crate::i18n::t("Several requests are waiting: use the buttons."),
         VoiceResult::NothingWaiting => crate::i18n::t("This request is already closed."),
     }
