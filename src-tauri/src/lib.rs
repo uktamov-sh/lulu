@@ -10,6 +10,7 @@ mod dance;
 mod desktop;
 mod files;
 mod flow;
+mod fullscreen;
 mod github;
 mod hooks;
 mod i18n;
@@ -1023,6 +1024,8 @@ pub fn run() {
             spotify::sync(&handle, &loaded.active_integrations);
             // Dancing to music: the computer's sound stays closed unless it is on.
             dance::set_enabled(&handle, loaded.dance_to_music);
+            // A full-screen game, video or presentation: the island steps aside.
+            fullscreen::start(&handle);
             // WhatsApp (experimental): nothing runs unless it is turned on and its pill is active.
             whatsapp::start(&handle, &loaded.active_integrations);
             shortcuts::apply(&handle, &loaded.shortcuts);

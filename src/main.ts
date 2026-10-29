@@ -164,6 +164,8 @@ async function main() {
   registerSpotifyHandlers(island);
   // Dancing to the computer's music: Rust sends the beat only while it is on.
   void onEvent<BeatInfo>("dance-beat", (e) => island.hearBeat(e));
+  // A full-screen game, video or presentation in front: the island steps aside.
+  void onEvent<boolean>("fullscreen", (on) => island.setFullscreen(on === true));
   registerWhatsAppHandlers(island);
   // New versions: Rust offers the card, the island opens it when nothing else waits.
   await Updates.register(island);

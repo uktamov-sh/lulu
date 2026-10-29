@@ -118,6 +118,8 @@ export class Island {
 
   /** The next reveal from hidden makes no peek (music starting, as on macOS). */
   private silentReveal = false;
+  /** A full-screen app is in front (setFullscreen). */
+  private fullscreen = false;
 
   /** Drop sequence bookkeeping: last tick played, and whether the ✓ has fired. */
   private uploadTens = 0;
@@ -475,7 +477,18 @@ export class Island {
   }
 
   reveal() {
+    if (this.fullscreen) return;
     this.fsm.reveal();
+  }
+
+  /**
+   * A full-screen game, video or presentation is in front, or no longer
+   * (src-tauri/src/fullscreen.rs). The island steps aside and work no longer
+   * brings it back; a card waiting for an answer stays, and alerts still open.
+   */
+  setFullscreen(on: boolean) {
+    this.fullscreen = on;
+    if (on && !this.fsm.pinned && State.mode !== "hidden") this.fsm.forceHidden();
   }
 
   /** The beat of the computer's music (src-tauri/src/dance/). */
@@ -484,11 +497,12 @@ export class Island {
     if (State.mode === "hidden") return;
     this.ensureRunning();
     // A dancing LuLu stays on screen: each beat starts the compact island's 60 s over.
-    if (e.beat) this.fsm.reveal();
+    if (e.beat) this.reveal();
   }
 
   /** Music started playing: the compact island, without the peek sound (musicReveal). */
   revealSilently() {
+    if (this.fullscreen) return;
     this.silentReveal = true;
     this.fsm.reveal();
     this.silentReveal = false;

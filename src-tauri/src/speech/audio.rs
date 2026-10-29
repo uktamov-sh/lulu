@@ -9,6 +9,7 @@
 use std::fs::File;
 use std::io::{BufWriter, Read, Seek, SeekFrom, Write};
 use std::path::Path;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc;
 use std::time::Duration;
 
@@ -17,6 +18,9 @@ use serde::Serialize;
 
 use super::SAMPLE_RATE;
 use crate::flow::logic::bands;
+
+/// A buffer underrun or overrun has been logged since launch.
+static XRUN_LOGGED: AtomicBool = AtomicBool::new(false);
 
 // ── Resampling ────────────────────────────────────────────────────────────────
 
@@ -338,7 +342,15 @@ fn build_stream(source: &Source, mut sink: impl FnMut(&[f32]) + Send + 'static) 
             sink(&out);
         }
     };
-    let err_fn = |err: cpal::Error| crate::log::line(format!("audio: {err}"));
+    let err_fn = |err: cpal::Error| {
+        let text = err.to_string();
+        // WASAPI reports every skipped buffer; harmless, and dozens a minute
+        // drowned the log. Said once per run.
+        if text.contains("underrun or overrun") && XRUN_LOGGED.swap(true, Ordering::Relaxed) {
+            return;
+        }
+        crate::log::line(format!("audio: {text}"));
+    };
     let stream = match format {
         cpal::SampleFormat::F32 => device.build_input_stream::<f32, _, _>(
             config,
