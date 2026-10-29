@@ -166,6 +166,15 @@ async function main() {
   void onEvent<BeatInfo>("dance-beat", (e) => island.hearBeat(e));
   // A full-screen game, video or presentation in front: the island steps aside.
   void onEvent<boolean>("fullscreen", (on) => island.setFullscreen(on === true));
+  // A task's reminder (Settings → Tasks).
+  void onEvent<string>("reminder", (text) => {
+    if (typeof text === "string" && text) island.showReminder(text);
+  });
+  // Nobody at the computer for a while: an idle LuLu dozes off (State.effectiveState).
+  void onEvent<boolean>("user-away", (away) => {
+    State.userAway = away === true;
+    State.notify();
+  });
   registerWhatsAppHandlers(island);
   // New versions: Rust offers the card, the island opens it when nothing else waits.
   await Updates.register(island);

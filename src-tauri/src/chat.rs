@@ -72,6 +72,16 @@ pub struct Turn {
 }
 
 impl Chat {
+    /// No question asked yet in this conversation.
+    pub fn is_fresh(&self) -> bool {
+        self.inner.lock().unwrap().plain.is_empty()
+    }
+
+    /// The conversation so far, as plain `{role, content}` messages (memory.rs).
+    pub fn transcript(&self) -> Vec<Value> {
+        self.inner.lock().unwrap().plain.clone()
+    }
+
     pub fn reset(&self) {
         let mut c = self.inner.lock().unwrap();
         let epoch = c.epoch + 1;
@@ -205,6 +215,11 @@ pub async fn send(
     context: Option<ChatContext>,
 ) -> Result<ChatReply, String> {
     let context = context.map(checked_context).transpose()?;
+    // Settings → Chat → Remember: the note rides with a new conversation's first question.
+    let query = match crate::memory::remembered().filter(|_| chat.is_fresh()) {
+        Some(note) => crate::memory::with_note(&note, &query),
+        None => query,
+    };
     let provider = settings.chat_provider.as_str();
     let model = model_for(settings, provider);
     if provider == ANTHROPIC || provider.is_empty() {

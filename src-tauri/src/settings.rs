@@ -108,6 +108,12 @@ pub struct Settings {
     /// get LuLu's card (and Telegram's) instead of staying in the app. Off by
     /// default, as on the Mac (#191).
     pub desktop_approvals: bool,
+    /// The chat's AI explains each permission request in one plain line
+    /// (explain.rs). Off by default: the command goes to that AI.
+    pub explain_requests: bool,
+    /// The island chat remembers earlier conversations in a short local note
+    /// (memory.rs). Off by default.
+    pub chat_memory: bool,
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
@@ -177,6 +183,8 @@ impl Default for Settings {
             show_clock: false,
             dance_to_music: false,
             desktop_approvals: false,
+            explain_requests: false,
+            chat_memory: false,
         }
     }
 }
@@ -467,7 +475,9 @@ mod tests {
   "phoneRelayUrl": "wss://relay.example.workers.dev",
   "showClock": true,
   "danceToMusic": true,
-  "desktopApprovals": true
+  "desktopApprovals": true,
+  "explainRequests": true,
+  "chatMemory": true
 }"##;
 
     fn custom() -> Value {
@@ -988,6 +998,8 @@ mod tests {
                 "showClock",
                 "danceToMusic",
                 "desktopApprovals",
+                "explainRequests",
+                "chatMemory",
             ]
         );
         let _ = std::fs::remove_dir_all(&dir);

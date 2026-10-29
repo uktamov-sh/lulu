@@ -14,7 +14,8 @@ import { APPROVAL_AGENTS, agentColor, agentName, validateAgent } from "./agents"
 import type { Island } from "./island";
 import { parseClaudePlan, restorePlanUsage } from "../core/plan";
 import { setClaudePlanUsage, storedClaudePlanUsage } from "../views/usage";
-import { N_, t } from "../i18n/i18n";
+import { LANGUAGES, N_, language, t } from "../i18n/i18n";
+import { toYangi } from "../i18n/yangi";
 
 const CLAUDE_ID = "integration_claude";
 const CURSOR_ID = "agent_cursor";
@@ -543,6 +544,8 @@ function handleHook(island: Island, payload: HookPayload) {
       // Any agent's card (Claude Code, Codex, Copilot CLI, Muse Code) comes up
       // the same way: beginApproval brought its pill to the front.
       island.alert(view);
+      // Settings → Agents → Explain requests: one plain line under the card.
+      if (!questions && requestId && State.settings.explainRequests) void explain(requestId, tool, cwd);
       // LuLu answers within 108 s or not at all; after that the terminal has
       // taken over and the card would be lying.
       pendingTimeout = window.setTimeout(() => {
@@ -556,4 +559,24 @@ function handleHook(island: Island, payload: HookPayload) {
       break;
   }
   State.notify();
+}
+
+/**
+ * The AI chosen in Settings → Chat says in one line what the agent wants and
+ * how risky it is (✅ ⚠️ ⛔), in LuLu's language. Shown under the card only if
+ * that card is still the one waiting; any failure leaves the card as it is.
+ */
+async function explain(requestId: string, tool: string, cwd: string | undefined) {
+  const command = State.pendingApproval?.command ?? "";
+  const lang = language();
+  const name = LANGUAGES.find((l) => l.code === (lang === "uz-yangi" ? "uz" : lang))?.name ?? "English";
+  try {
+    const line = await Bridge.explainRequest(tool, command, cwd ?? "", name);
+    const pending = State.pendingApproval;
+    if (!line || pending?.requestId !== requestId) return;
+    pending.explanation = lang === "uz-yangi" ? toYangi(line) : line;
+    State.notify();
+  } catch {
+    // No key, no network, a refusal: the card stays as it was.
+  }
 }

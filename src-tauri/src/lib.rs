@@ -2,6 +2,7 @@
 
 mod agent_hooks;
 mod agents;
+mod explain;
 mod chat;
 mod claude;
 mod codex_plan;
@@ -19,6 +20,7 @@ mod integrations;
 mod island;
 mod local_chat;
 mod log;
+mod memory;
 mod net;
 mod notes;
 mod openai_compat;
@@ -27,6 +29,7 @@ mod pipe;
 mod platform;
 #[cfg(target_os = "linux")]
 mod portal;
+mod presence;
 mod recap;
 mod secrets;
 mod session_window;
@@ -35,6 +38,7 @@ mod shortcuts;
 mod sounds;
 mod speech;
 mod spotify;
+mod tasks;
 mod telegram;
 mod tray;
 mod update;
@@ -135,6 +139,7 @@ fn save_settings(app: AppHandle, shared: State<Shared>, settings: Settings) {
     integrations::settings_saved(&app, &settings.active_integrations);
     spotify::sync(&app, &settings.active_integrations);
     dance::set_enabled(&app, settings.dance_to_music);
+    memory::set_enabled(settings.chat_memory);
     whatsapp::sync(&settings.active_integrations);
     if shortcuts_changed {
         shortcuts::apply(&app, &settings.shortcuts);
@@ -566,8 +571,12 @@ fn local_set_key(url: String, key: String) -> Result<(), String> {
 }
 
 #[tauri::command]
-fn chat_reset(chat: State<Chat>) {
+fn chat_reset(shared: State<Shared>, chat: State<Chat>) {
+    // Settings → Chat → Remember: the conversation that ends is folded into the note.
+    let ended = chat.transcript();
     chat.reset();
+    let settings = shared.settings.lock().unwrap().clone();
+    tauri::async_runtime::spawn(memory::fold_in(settings, ended));
 }
 
 /// Copies a dropped file into the inbox and reports its name back.
@@ -909,6 +918,14 @@ pub fn run() {
             desktop::desktop_mochi_fly_out,
             desktop::desktop_mochi_fly_home,
             desktop::desktop_mochi_set_asleep,
+            desktop::desktop_mochi_stroll,
+            explain::explain_request,
+            memory::memory_text,
+            memory::memory_forget,
+            tasks::tasks_list,
+            tasks::tasks_add,
+            tasks::tasks_set_done,
+            tasks::tasks_delete,
             sounds::custom_sounds,
             sounds::custom_sound,
             sounds::reveal_sounds_folder,
@@ -990,6 +1007,8 @@ pub fn run() {
             desktop::setup(&handle);
             flow::setup(&handle);
             notes::setup(&handle);
+            // Tasks and their reminders (Settings → Tasks).
+            tasks::setup(&handle);
 
             if let Some(win) = island::window(&handle) {
                 // Where Tauri takes the drop itself (Linux), its paths are the
@@ -1024,8 +1043,11 @@ pub fn run() {
             spotify::sync(&handle, &loaded.active_integrations);
             // Dancing to music: the computer's sound stays closed unless it is on.
             dance::set_enabled(&handle, loaded.dance_to_music);
+            memory::set_enabled(loaded.chat_memory);
             // A full-screen game, video or presentation: the island steps aside.
             fullscreen::start(&handle);
+            // Nobody at the computer for a while: LuLu dozes off on the island.
+            presence::start(&handle);
             // WhatsApp (experimental): nothing runs unless it is turned on and its pill is active.
             whatsapp::start(&handle, &loaded.active_integrations);
             shortcuts::apply(&handle, &loaded.shortcuts);

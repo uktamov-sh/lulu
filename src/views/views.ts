@@ -550,7 +550,10 @@ function buildApproval(actions: ViewActions): ViewHost {
         shownAt = performance.now();
       }
       clear(who);
-      who.append(agentWho(State.focusTask, t("needs permission")));
+      // The chat's AI may have said in one line what this is (hooks.ts explain).
+      const explained = State.pendingApproval?.explanation;
+      who.append(agentWho(State.focusTask, explained ?? t("needs permission")));
+      who.title = explained ?? "";
       // The whole point of approving here rather than in the terminal: this line
       // is the command, the file path or the URL being authorised, not just the
       // name of the tool asking.

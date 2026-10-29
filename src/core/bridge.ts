@@ -432,6 +432,17 @@ export const Bridge = {
   desktopFlyHome: (forget: boolean) => call<boolean>("desktop_mochi_fly_home", { forget }),
   /** Asleep, the cursor poll stops. */
   desktopSetAsleep: (asleep: boolean) => call<void>("desktop_mochi_set_asleep", { asleep }),
+  /** A stroll: the walk's length in ms and direction (-1 left, 1 right), or null when he stays. */
+  /** One plain line about a permission request, from the AI chosen for the chat. */
+  explainRequest: (tool: string, detail: string, cwd: string, language: string) =>
+    call<string>("explain_request", { tool, detail, cwd, language }),
+  memoryText: () => call<string>("memory_text"),
+  memoryForget: () => call<void>("memory_forget"),
+  tasksList: () => call<TaskItem[]>("tasks_list"),
+  tasksAdd: (text: string, due: number | null, daily: boolean) => call<TaskItem[]>("tasks_add", { text, due, daily }),
+  tasksSetDone: (id: number, done: boolean) => call<TaskItem[]>("tasks_set_done", { id, done }),
+  tasksDelete: (id: number) => call<TaskItem[]>("tasks_delete", { id }),
+  desktopStroll: (pick: number, along: number) => call<[number, number] | null>("desktop_mochi_stroll", { pick, along }),
 
   // ── Spotify (src-tauri/src/spotify.rs) ────────────────────────────────────
   /** Reads the player again (the card came on screen) and reports it. */
@@ -614,6 +625,15 @@ async function callOrThrow<T>(cmd: string, args?: Record<string, unknown>): Prom
 }
 
 /** Settings → Agents → Telegram (src-tauri/src/telegram). The token itself never comes back. */
+/** A task in Settings → Tasks (src-tauri/src/tasks.rs). `due` is Unix ms. */
+export interface TaskItem {
+  id: number;
+  text: string;
+  due: number | null;
+  daily: boolean;
+  done: boolean;
+}
+
 export interface TelegramStatus {
   enabled: boolean;
   hideCommand: boolean;

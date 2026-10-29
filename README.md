@@ -91,4 +91,7 @@ certificate by [SignPath Foundation](https://signpath.org/).
 - Privacy: LuLu sends nothing anywhere unless you turn it on. The Telegram
   approvals talk only to `api.telegram.org` with your own bot; update checks
   read this repository's Releases page; the chat sends your messages only to
-  the AI service you configure. There is no telemetry.
+  the AI service you configure, and so do "Explain requests" (the tool, the
+  folder and the command) and the chat's memory (a short note kept in
+  `%APPDATA%\LuLu\memory.txt`), both off by default. Tasks stay in
+  `%APPDATA%\LuLu	asks.json`. There is no telemetry.

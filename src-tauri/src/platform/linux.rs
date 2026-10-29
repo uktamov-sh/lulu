@@ -937,3 +937,9 @@ fn apply_rects(gw: &impl IsA<gtk::Widget>, rects: &[(f64, f64, f64, f64)]) {
     }
     gdk_window.input_shape_combine_region(&region, 0, 0);
 }
+
+/// No window positions to stand on under Wayland: desktop LuLu walks the
+/// bottom of the screen only (desktop.rs).
+pub fn front_window_ledge() -> Option<(f64, f64, f64, f64)> {
+    None
+}

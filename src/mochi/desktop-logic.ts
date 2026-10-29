@@ -49,6 +49,19 @@ export const PANEL_SIZE = 120;
 export const SLEEP_TIMEOUT = 120;
 /** He only dozes off once the pointer is at least this far from him. */
 export const SLEEP_MOUSE_DISTANCE = 150;
+/** Seconds between two strolls (Windows): a random wait in this range. */
+export const STROLL_MIN_S = 45;
+export const STROLL_MAX_S = 120;
+
+/**
+ * Whether he may set off on a stroll now: awake, on screen, not carried,
+ * not dancing, no alert of his own coming — and only where Rust can move him
+ * along (the cursor-poll mode, Windows).
+ */
+export function mayStroll(s: { visible: boolean; asleep: boolean; dragging: boolean; dancing: boolean; poll: boolean }): boolean {
+  return s.poll && s.visible && !s.asleep && !s.dragging && !s.dancing;
+}
+
 /** Clickable body radius, as a fraction of the window side. */
 export const BODY_RADIUS_FRACTION = 0.24;
 

@@ -50,6 +50,8 @@ export interface ApprovalInfo {
   command: string;
   /** Set when Claude Code is asking a question rather than for a permission. */
   questions?: AskedQuestion[];
+  /** One plain line from the chat's AI about what this is (hooks.ts explain). */
+  explanation?: string;
 }
 
 /** One question of an AskUserQuestion call. */
@@ -109,6 +111,10 @@ export interface Settings {
   danceToMusic: boolean;
   /** Claude desktop sessions' permission requests get the card too (hooks.ts). */
   desktopApprovals: boolean;
+  /** The chat's AI explains each permission request in one plain line (hooks.ts). */
+  explainRequests: boolean;
+  /** The island chat remembers earlier conversations (src-tauri/src/memory.rs). */
+  chatMemory: boolean;
   absenceInterval: number;
   /** Declared pills next to the main one (at most 4), in the order they were added. */
   activeIntegrations: string[];
@@ -178,6 +184,8 @@ export const DEFAULT_SETTINGS: Settings = {
   showClock: false,
   danceToMusic: false,
   desktopApprovals: false,
+  explainRequests: false,
+  chatMemory: false,
   absenceInterval: 180,
   activeIntegrations: [
     "integration_resend", "integration_n8n", "integration_vercel", "integration_github",
@@ -224,6 +232,8 @@ class AppState {
 
   isPinned = false;
   paused = false;
+  /** Nobody at the computer for Settings' absence interval (src-tauri/src/presence.rs). */
+  userAway = false;
 
   uploadProgress = 0;
   uploadDuration = 2.4;
@@ -290,7 +300,9 @@ class AppState {
   }
 
   get effectiveState(): BotStateName {
-    return this.stateOverride ?? this.focusTask?.state ?? "idle";
+    const state = this.stateOverride ?? this.focusTask?.state ?? "idle";
+    // Agents at work keep LuLu up; an idle LuLu dozes off once you are away.
+    return state === "idle" && this.userAway ? "sleeping" : state;
   }
 
   /** Spotify plays on a declared pill: LuLu dances (Linux; never on Windows yet). */

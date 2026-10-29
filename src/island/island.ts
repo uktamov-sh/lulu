@@ -491,6 +491,25 @@ export class Island {
     if (on && !this.fsm.pinned && State.mode !== "hidden") this.fsm.forceHidden();
   }
 
+  /**
+   * A task's time has come (src-tauri/src/tasks.rs): the island says it, then
+   * folds back after 10 s. A card waiting for an answer is never covered; the
+   * phone still gets the reminder.
+   */
+  showReminder(text: string) {
+    if (State.pendingApproval != null) return;
+    const message = `⏰ ${text}`;
+    State.noteMessage = message;
+    this.alert("note");
+    this.emote("happy");
+    Sound.play("pop");
+    window.setTimeout(() => {
+      if (State.view === "note" && State.noteMessage === message && State.mode === "expanded" && !State.isPinned) {
+        this.fsm.forcePetit();
+      }
+    }, 10_000);
+  }
+
   /** The beat of the computer's music (src-tauri/src/dance/). */
   hearBeat(e: BeatInfo) {
     this.engine.hearBeat(e);

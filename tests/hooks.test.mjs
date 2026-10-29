@@ -371,6 +371,16 @@ test("with Settings → Agents → Claude desktop on, its permission requests ge
   assert.equal(State.pendingApproval?.requestId, "r2");
 });
 
+test("with Explain requests on, the card asks the chat's AI for one line; off, nothing goes out", () => {
+  hook({ hook_event_name: "PermissionRequest", request_id: "r3", tool_name: "Bash", cwd: "/p", tool_input: { command: "rm -rf build" } });
+  assert.deepEqual(sent("explain_request"), []);
+  State.pendingApproval = null;
+  calls.length = 0;
+  State.settings.explainRequests = true;
+  hook({ hook_event_name: "PermissionRequest", request_id: "r4", tool_name: "Bash", cwd: "/p", tool_input: { command: "rm -rf build" } });
+  assert.deepEqual(sent("explain_request"), [{ tool: "Bash", detail: "Bash · rm -rf build", cwd: "/p", language: "English" }]);
+});
+
 // ── Main tool and Cursor ──────────────────────────────────────────────────────
 
 test("Claude Code in Cursor's terminal works on the Cursor pill, made for the session", () => {

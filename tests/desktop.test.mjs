@@ -7,9 +7,31 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   BODY_RADIUS_FRACTION, DesktopLuLuController, PANEL_SIZE, RETRACT_DELAY_MS, RETURN_DELAY_MS,
-  agentActive, alertActive, gaze, isOverBody, layerDragTopLeft, lookOrigin, pointerDistance,
+  agentActive, alertActive, gaze, isOverBody, layerDragTopLeft, lookOrigin, mayStroll, pointerDistance,
   shouldRetractOnLanding, shouldSleep, windowDragTopLeft,
 } from "../src/mochi/desktop-logic.ts";
+import { DEFAULT_SETTINGS, State } from "../src/core/state.ts";
+
+test("a stroll only when he is awake, on screen, free and not dancing, on Windows", () => {
+  const ok = { visible: true, asleep: false, dragging: false, dancing: false, poll: true };
+  assert.equal(mayStroll(ok), true);
+  for (const key of ["asleep", "dragging", "dancing"]) assert.equal(mayStroll({ ...ok, [key]: true }), false, key);
+  for (const key of ["visible", "poll"]) assert.equal(mayStroll({ ...ok, [key]: false }), false, key);
+});
+
+test("away from the computer, an idle LuLu sleeps; agents at work keep her up", () => {
+  State.settings = { ...DEFAULT_SETTINGS };
+  State.tasks = [];
+  State.focusId = null;
+  State.stateOverride = null;
+  State.userAway = true;
+  assert.equal(State.effectiveState, "sleeping");
+  State.stateOverride = "working";
+  assert.equal(State.effectiveState, "working");
+  State.stateOverride = null;
+  State.userAway = false;
+  assert.equal(State.effectiveState, "idle");
+});
 
 // ── shouldSleep ───────────────────────────────────────────────────────────────
 

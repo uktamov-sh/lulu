@@ -12,8 +12,8 @@ import type { BotEmoteName } from "../core/layout";
 import { Sound } from "../core/sound";
 import { BotEngine } from "../mochi/engine";
 import {
-  DESKTOP_EVENTS, DOUBLE_CLICK_MS, DRAG_THRESHOLD, PANEL_SIZE, agentActive, gaze, isOverBody,
-  layerDragTopLeft, lookOrigin, pointerDistance, shouldSleep, windowDragTopLeft,
+  DESKTOP_EVENTS, DOUBLE_CLICK_MS, DRAG_THRESHOLD, PANEL_SIZE, STROLL_MAX_S, STROLL_MIN_S, agentActive, gaze,
+  isOverBody, layerDragTopLeft, lookOrigin, mayStroll, pointerDistance, shouldSleep, windowDragTopLeft,
   type DesktopSnapshot, type Point,
 } from "../mochi/desktop-logic";
 
@@ -60,6 +60,10 @@ class DesktopLuLu {
   private dragTopLeft: Point | null = null;
   private moveFrame = false;
   private pokeTimer: number | null = null;
+  /** The next stroll, and the one under way: until when, and which way he looks. */
+  private strollTimer: number | null = null;
+  private walkUntil = 0;
+  private walkDir = 0;
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -123,9 +127,12 @@ class DesktopLuLu {
       this.engine.setState(this.snap.state, true);
       this.engine.setOutfit(this.snap.outfit, false);
       this.schedule();
+      this.planStroll();
       return;
     }
     this.cancelPoke();
+    if (this.strollTimer != null) window.clearTimeout(this.strollTimer);
+    this.strollTimer = null;
     this.press = null;
     this.dragging = false;
     this.setOffset({ x: 0, y: 0 });
@@ -150,6 +157,29 @@ class DesktopLuLu {
     void Bridge.desktopSetAsleep(sleep);
     if (sleep) Sound.idle();
     this.schedule();
+  }
+
+  /** Now and then, awake, he walks off: along the bottom of the screen or up onto the window in front. */
+  private planStroll() {
+    if (this.strollTimer != null) window.clearTimeout(this.strollTimer);
+    const wait = (STROLL_MIN_S + Math.random() * (STROLL_MAX_S - STROLL_MIN_S)) * 1000;
+    this.strollTimer = window.setTimeout(() => {
+      this.strollTimer = null;
+      if (!this.visible) return;
+      const go = mayStroll({
+        visible: this.visible, asleep: this.asleep, dragging: this.dragging || this.press != null,
+        dancing: this.snap.dancing, poll: this.mode === "poll",
+      });
+      if (go) {
+        void Bridge.desktopStroll(Math.random(), Math.random()).then((walk) => {
+          if (!walk) return;
+          this.walkUntil = performance.now() + walk[0];
+          this.walkDir = walk[1];
+          this.schedule();
+        });
+      }
+      this.planStroll();
+    }, wait);
   }
 
   private wake() {
@@ -199,7 +229,11 @@ class DesktopLuLu {
     if (!ctx) return;
     const engine = this.engine;
     engine.setOutfit(this.snap.outfit, true);
-    if (!this.asleep) {
+    if (!this.asleep && now < this.walkUntil) {
+      // On a stroll he looks where he is going.
+      engine.lookX = this.walkDir * 0.9;
+      engine.lookY = 0;
+    } else if (!this.asleep) {
       // Windows: the global cursor. Linux: only while the pointer is over him.
       const fresh = this.mode === "poll" || now - this.lastPointer < 1500;
       const g = this.cursor && fresh ? gaze(lookOrigin(0, 0), this.cursor) : { lookX: 0, lookY: 0 };

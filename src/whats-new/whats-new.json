@@ -2,6 +2,151 @@
   "about": "What's new, shown once in the island after LuLu updates itself (src/whats-new/). Every Windows and Linux release adds its entry here, in the 12 languages: 1 to 4 items, a short title and one line each, an icon from scripts/test-whats-new.py. python3 scripts/test-whats-new.py checks it.",
   "releases": [
     {
+      "version": "0.2.0",
+      "items": [
+        {
+          "icon": "sparkles",
+          "title": {
+            "en": "Requests in plain words",
+            "zh-Hans": "用通俗的话说明请求",
+            "hi": "सरल शब्दों में अनुरोध",
+            "es": "Solicitudes en palabras sencillas",
+            "ar": "الطلبات بكلمات بسيطة",
+            "fr": "Les demandes en mots simples",
+            "bn": "সহজ ভাষায় অনুরোধ",
+            "pt-BR": "Pedidos em palavras simples",
+            "ru": "Запросы простыми словами",
+            "id": "Permintaan dengan kata sederhana",
+            "de": "Anfragen in einfachen Worten",
+            "tr": "İstekler basit sözlerle",
+            "uz": "Soʻrovlar oddiy soʻzlar bilan",
+            "uz-yangi": "Sörovlar oddiy sözlar bilan"
+          },
+          "detail": {
+            "en": "Your chat AI says in one line what an agent wants and how risky it is. Settings → Agents.",
+            "zh-Hans": "你的聊天 AI 会用一句话说明代理想做什么以及风险有多大。设置 → 代理。",
+            "hi": "आपकी चैट AI एक पंक्ति में बताती है कि एजेंट क्या चाहता है और कितना जोखिम है। सेटिंग्स → एजेंट।",
+            "es": "Tu IA del chat dice en una línea qué quiere un agente y cuánto riesgo tiene. Ajustes → Agentes.",
+            "ar": "يقول ذكاء الدردشة في سطر واحد ما يريده الوكيل ومدى خطورته. الإعدادات ← الوكلاء.",
+            "fr": "L’IA de ton chat dit en une ligne ce que veut un agent et à quel point c’est risqué. Réglages → Agents.",
+            "bn": "আপনার চ্যাট AI এক লাইনে বলে এজেন্ট কী চায় আর কতটা ঝুঁকি। সেটিংস → এজেন্ট।",
+            "pt-BR": "A IA do seu chat diz em uma linha o que um agente quer e quão arriscado é. Ajustes → Agentes.",
+            "ru": "ИИ вашего чата одной строкой говорит, что хочет агент и насколько это рискованно. Настройки → Агенты.",
+            "id": "AI obrolanmu menjelaskan dalam satu baris apa yang diinginkan agen dan seberapa berisiko. Pengaturan → Agen.",
+            "de": "Deine Chat-KI sagt in einer Zeile, was ein Agent will und wie riskant es ist. Einstellungen → Agenten.",
+            "tr": "Sohbet yapay zekân, bir ajanın ne istediğini ve ne kadar riskli olduğunu tek satırda söyler. Ayarlar → Ajanlar.",
+            "uz": "Chat sunʼiy intellekti agent nima istayotganini va qanchalik xavfli ekanini bir qatorda aytadi. Sozlamalar → Agentlar.",
+            "uz-yangi": "Çat sunʼiy intellekti agent nima istayotganini va qançalik xavfli ekanini bir qatorda aytadi. Sozlamalar → Agentlar."
+          }
+        },
+        {
+          "icon": "checklist",
+          "title": {
+            "en": "Tasks and reminders",
+            "zh-Hans": "任务和提醒",
+            "hi": "कार्य और रिमाइंडर",
+            "es": "Tareas y recordatorios",
+            "ar": "المهام والتذكيرات",
+            "fr": "Tâches et rappels",
+            "bn": "কাজ ও রিমাইন্ডার",
+            "pt-BR": "Tarefas e lembretes",
+            "ru": "Задачи и напоминания",
+            "id": "Tugas dan pengingat",
+            "de": "Aufgaben und Erinnerungen",
+            "tr": "Görevler ve hatırlatmalar",
+            "uz": "Vazifalar va eslatmalar",
+            "uz-yangi": "Vazifalar va eslatmalar"
+          },
+          "detail": {
+            "en": "A to-do list with reminders in the island and on your phone through Telegram. Settings → Tasks.",
+            "zh-Hans": "带提醒的待办清单，提醒会出现在岛上，并通过 Telegram 发到手机。设置 → 任务。",
+            "hi": "रिमाइंडर के साथ कार्य सूची — आइलैंड में और Telegram से फ़ोन पर। सेटिंग्स → कार्य।",
+            "es": "Una lista de tareas con recordatorios en la isla y en tu teléfono por Telegram. Ajustes → Tareas.",
+            "ar": "قائمة مهام مع تذكيرات في الجزيرة وعلى هاتفك عبر Telegram. الإعدادات ← المهام.",
+            "fr": "Une liste de tâches avec des rappels dans l’île et sur ton téléphone via Telegram. Réglages → Tâches.",
+            "bn": "রিমাইন্ডারসহ কাজের তালিকা — আইল্যান্ডে আর Telegram দিয়ে ফোনে। সেটিংস → কাজ।",
+            "pt-BR": "Uma lista de tarefas com lembretes na ilha e no celular pelo Telegram. Ajustes → Tarefas.",
+            "ru": "Список дел с напоминаниями на острове и на телефоне через Telegram. Настройки → Задачи.",
+            "id": "Daftar tugas dengan pengingat di pulau dan di ponsel lewat Telegram. Pengaturan → Tugas.",
+            "de": "Eine Aufgabenliste mit Erinnerungen in der Insel und per Telegram auf dem Handy. Einstellungen → Aufgaben.",
+            "tr": "Adada ve Telegram ile telefonunda hatırlatmalı bir yapılacaklar listesi. Ayarlar → Görevler.",
+            "uz": "Orolchada va Telegram orqali telefonda eslatmali vazifalar roʻyxati. Sozlamalar → Vazifalar.",
+            "uz-yangi": "Orolçada va Telegram orqali telefonda eslatmali vazifalar röyxati. Sozlamalar → Vazifalar."
+          }
+        },
+        {
+          "icon": "eye",
+          "title": {
+            "en": "A livelier LuLu",
+            "zh-Hans": "更有生气的 LuLu",
+            "hi": "और जीवंत LuLu",
+            "es": "Una LuLu más viva",
+            "ar": "LuLu أكثر حيوية",
+            "fr": "Une LuLu plus vivante",
+            "bn": "আরও প্রাণবন্ত LuLu",
+            "pt-BR": "Uma LuLu mais viva",
+            "ru": "LuLu стала живее",
+            "id": "LuLu yang lebih hidup",
+            "de": "Eine lebendigere LuLu",
+            "tr": "Daha canlı bir LuLu",
+            "uz": "Yanada jonli LuLu",
+            "uz-yangi": "Yanada jonli LuLu"
+          },
+          "detail": {
+            "en": "She dozes off when you are away, steps aside for full-screen apps and strolls along your windows.",
+            "zh-Hans": "你离开时她会打盹，全屏应用时会让开，还会在窗口上散步。",
+            "hi": "आप दूर हों तो वह झपकी लेती है, फ़ुल-स्क्रीन ऐप के लिए हट जाती है और आपकी विंडो पर टहलती है।",
+            "es": "Se duerme cuando no estás, se aparta ante apps a pantalla completa y pasea por tus ventanas.",
+            "ar": "تغفو عندما تبتعد، وتتنحّى أمام تطبيقات ملء الشاشة، وتتجوّل فوق نوافذك.",
+            "fr": "Elle s’assoupit quand tu t’absentes, s’efface devant les apps en plein écran et se promène sur tes fenêtres.",
+            "bn": "আপনি দূরে থাকলে সে ঝিমায়, ফুল-স্ক্রিন অ্যাপের জন্য সরে যায় আর আপনার উইন্ডোর ওপর হাঁটে।",
+            "pt-BR": "Ela cochila quando você se ausenta, sai da frente de apps em tela cheia e passeia pelas suas janelas.",
+            "ru": "Засыпает, когда вас нет, прячется перед полноэкранными приложениями и гуляет по окнам.",
+            "id": "Ia tertidur saat kamu pergi, menyingkir dari aplikasi layar penuh, dan berjalan-jalan di jendelamu.",
+            "de": "Sie döst, wenn du weg bist, macht Vollbild-Apps Platz und spaziert über deine Fenster.",
+            "tr": "Sen yokken uyuklar, tam ekran uygulamalara yol verir ve pencerelerinde gezinir.",
+            "uz": "Siz yoʻqligingizda mudraydi, toʻliq ekranli ilovalarga yoʻl beradi va oynalaringiz ustida sayr qiladi.",
+            "uz-yangi": "Siz yöqligingizda mudraydi, töliq ekranli ilovalarga yöl beradi va oynalaringiz ustida sayr qiladi."
+          }
+        },
+        {
+          "icon": "heart",
+          "title": {
+            "en": "Claude app sessions too",
+            "zh-Hans": "Claude 应用会话也支持",
+            "hi": "Claude ऐप के सत्र भी",
+            "es": "También las sesiones de la app Claude",
+            "ar": "جلسات تطبيق Claude أيضًا",
+            "fr": "Les sessions de l’app Claude aussi",
+            "bn": "Claude অ্যাপের সেশনও",
+            "pt-BR": "As sessões do app Claude também",
+            "ru": "Сессии приложения Claude тоже",
+            "id": "Sesi aplikasi Claude juga",
+            "de": "Auch Sitzungen der Claude-App",
+            "tr": "Claude uygulaması oturumları da",
+            "uz": "Claude ilovasi sessiyalari ham",
+            "uz-yangi": "Claude ilovasi sessiyalari ham"
+          },
+          "detail": {
+            "en": "Permission requests from the Claude desktop app can come to the island and Telegram, and the chat can remember you.",
+            "zh-Hans": "Claude 桌面应用的权限请求可以来到岛和 Telegram，聊天还能记住你。",
+            "hi": "Claude डेस्कटॉप ऐप के अनुमति अनुरोध आइलैंड और Telegram पर आ सकते हैं, और चैट आपको याद रख सकती है।",
+            "es": "Las solicitudes de la app de escritorio de Claude pueden llegar a la isla y a Telegram, y el chat puede recordarte.",
+            "ar": "يمكن أن تصل طلبات الإذن من تطبيق Claude لسطح المكتب إلى الجزيرة وTelegram، ويمكن للدردشة أن تتذكرك.",
+            "fr": "Les demandes de l’app de bureau Claude peuvent arriver dans l’île et sur Telegram, et le chat peut se souvenir de toi.",
+            "bn": "Claude ডেস্কটপ অ্যাপের অনুমতির অনুরোধ আইল্যান্ড ও Telegram-এ আসতে পারে, আর চ্যাট আপনাকে মনে রাখতে পারে।",
+            "pt-BR": "Os pedidos do app de desktop do Claude podem chegar à ilha e ao Telegram, e o chat pode lembrar de você.",
+            "ru": "Запросы из приложения Claude для компьютера могут приходить на остров и в Telegram, а чат умеет вас помнить.",
+            "id": "Permintaan izin dari aplikasi desktop Claude bisa masuk ke pulau dan Telegram, dan obrolan bisa mengingatmu.",
+            "de": "Anfragen aus der Claude-Desktop-App können in die Insel und zu Telegram kommen, und der Chat kann sich an dich erinnern.",
+            "tr": "Claude masaüstü uygulamasının izin istekleri adaya ve Telegram’a gelebilir; sohbet de seni hatırlayabilir.",
+            "uz": "Claude kompyuter ilovasidagi ruxsat soʻrovlari orolcha va Telegramga kelishi mumkin, chat esa sizni eslab qoladi.",
+            "uz-yangi": "Claude kompyuter ilovasidagi ruxsat sörovlari orolça va Telegramga kelişi mumkin, çat esa sizni eslab qoladi."
+          }
+        }
+      ]
+    },
+    {
       "version": "0.1.0",
       "items": [
         {

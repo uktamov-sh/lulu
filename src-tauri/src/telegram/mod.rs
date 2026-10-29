@@ -342,6 +342,17 @@ pub fn prepare(app: &AppHandle, payload: &Value) -> Option<Draft> {
     self::core::draft(payload, hide)
 }
 
+/// A plain message to the paired chat (a task's reminder, tasks.rs), when
+/// Telegram is on and paired; otherwise nothing. Never waits.
+pub fn notify(app: &AppHandle, text: &str) {
+    let Some(tg) = app.try_state::<Telegram>() else { return };
+    if !tg.prefs.lock().unwrap().enabled {
+        return;
+    }
+    let Some(owner) = tg.book.lock().unwrap().owner else { return };
+    send_later(app, "sendMessage", json!({ "chat_id": owner, "text": text }));
+}
+
 /// The island has the request on screen: the phone gets its card. Never waits.
 pub fn offer(app: &AppHandle, request_id: &str, draft: Draft) {
     let Some(tg) = app.try_state::<Telegram>() else { return };

@@ -641,3 +641,28 @@ pub fn prepare_pill_window(win: &WebviewWindow, _mode: super::DesktopMode) -> bo
 pub fn set_pill_edge(_win: &WebviewWindow, _edge: &str) {}
 
 pub fn set_pill_input(_win: &WebviewWindow, _rects: Vec<(f64, f64, f64, f64)>) {}
+
+/// The window in front, as (x, y, width, height) in physical pixels, for
+/// desktop LuLu to walk on its top edge (desktop.rs): never one of LuLu's own,
+/// a minimized or a maximized one (no room above it). Its title and contents
+/// are never read.
+pub fn front_window_ledge() -> Option<(f64, f64, f64, f64)> {
+    use ::windows::Win32::Foundation::RECT;
+    use ::windows::Win32::UI::WindowsAndMessaging::{
+        GetForegroundWindow, GetWindowRect, GetWindowThreadProcessId, IsIconic, IsZoomed,
+    };
+    unsafe {
+        let hwnd = GetForegroundWindow();
+        if hwnd.0.is_null() || IsIconic(hwnd).as_bool() || IsZoomed(hwnd).as_bool() {
+            return None;
+        }
+        let mut pid = 0u32;
+        GetWindowThreadProcessId(hwnd, Some(&mut pid));
+        if pid == std::process::id() {
+            return None;
+        }
+        let mut r = RECT::default();
+        GetWindowRect(hwnd, &mut r).ok()?;
+        Some((r.left as f64, r.top as f64, (r.right - r.left) as f64, (r.bottom - r.top) as f64))
+    }
+}

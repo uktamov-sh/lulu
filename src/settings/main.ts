@@ -24,6 +24,7 @@ import { agentsSection } from "./agents";
 import { phoneSection } from "./phone";
 import { whatsappSection } from "./whatsapp";
 import { telegramSection } from "./telegram";
+import { tasksSection } from "./tasks";
 import { WHATSAPP_ID } from "../core/whatsapp";
 import { updateRows, updatesListener } from "./updates";
 import { colorDot } from "./colors";
@@ -209,6 +210,11 @@ function claudeSection(status: HookStatus): HTMLElement {
         toggle(settings.desktopApprovals, (on) => { settings.desktopApprovals = on; void save(); }),
       ),
       h("div", { class: "hint", text: t("Claude Code sessions started from the Claude desktop app ask for permission in the island and in Telegram instead of in the app. While LuLu waits for your answer, the app shows nothing.") }),
+      h("div", { class: "row" },
+        h("label", { text: t("Explain requests in plain words") }),
+        toggle(settings.explainRequests, (on) => { settings.explainRequests = on; void save(); }),
+      ),
+      h("div", { class: "hint", text: t("The AI chosen in Settings → Chat says in one line what the agent wants and whether it is routine (✅), worth a look (⚠️) or risky (⛔). The tool, the project folder and the command go to that AI.") }),
     );
 
     if (!status.hookReady) {
@@ -342,6 +348,29 @@ const MODELS: [string, string][] = [
   ["claude-sonnet-5", "Claude Sonnet 5"],
   ["claude-haiku-4-5", "Claude Haiku 4.5"],
 ];
+
+/** Settings → Chat → memory: the short note the island chat keeps (src-tauri/src/memory.rs). */
+function memorySection(): HTMLElement {
+  const note = h("div", { class: "hint", style: "white-space:pre-wrap" });
+  const forget = h("button", { class: "danger", text: t("Forget everything") });
+  const show = async () => {
+    const text = ((await Bridge.memoryText()) ?? "").trim();
+    note.textContent = text || t("Nothing remembered yet.");
+    forget.style.display = text ? "" : "none";
+  };
+  forget.onclick = () => void Bridge.memoryForget().then(show);
+  void show();
+  return h("section", {},
+    h("h2", {}, h("span", { text: t("Memory") })),
+    h("div", { class: "row" },
+      h("label", { text: t("Remember earlier conversations") }),
+      toggle(settings.chatMemory, (on) => { settings.chatMemory = on; void save(); }),
+    ),
+    h("div", { class: "hint", text: t("When you start a new chat, the chat's AI sums up the one that ended in a short note about you (no passwords, keys or card numbers). The note stays on this computer and goes with the first question of each new chat.") }),
+    note,
+    h("div", { class: "row" }, forget),
+  );
+}
 
 function apiSection(hasKey: boolean): HTMLElement {
   const dot = statusDot(hasKey);
@@ -1415,7 +1444,8 @@ async function render() {
     general: () => [generalSection()],
     pills: () => [activePillsSection(connected)],
     agents: () => [claudeSection(status), agentsSection(agents), telegramSection(toggle, KEY_STORE), planSection(status)],
-    chat: () => [apiSection(hasKey), chatProvidersSection(chatKeys, keyChanged), localSection(customKey)],
+    tasks: () => [tasksSection()],
+    chat: () => [apiSection(hasKey), chatProvidersSection(chatKeys, keyChanged), localSection(customKey), memorySection()],
     integrations: () => [integrationsSection(present), ...whatsappSections()],
     phone: () => [phoneSection(settings.phoneLink ?? false, toggle, settings)],
     shortcuts: () => [shortcutsSection(shortcutReport)],

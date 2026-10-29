@@ -187,6 +187,32 @@ pub mod logic {
     pub fn lerp(a: (f64, f64), b: (f64, f64), t: f64) -> (f64, f64) {
         (a.0 + (b.0 - a.0) * t, a.1 + (b.1 - a.1) * t)
     }
+
+    /// A walk: the same pace all the way.
+    pub fn linear(t: f64) -> f64 {
+        t
+    }
+
+    /// Where the window's foot line is, as a fraction of its side (his feet).
+    pub const FEET: f64 = 0.8;
+    /// Walking pace, logical pixels a second.
+    pub const WALK_SPEED: f64 = 90.0;
+
+    /// Where a stroll takes him: up on the top edge of the window in front
+    /// (`ledge`, when there is room above it on his display) when `pick` < 0.4,
+    /// otherwise along the bottom of the work area. `along` (0..1) chooses the
+    /// place on that line. Top-left corner of his window, physical pixels.
+    pub fn stroll_target(d: &Display, ledge: Option<Rect>, size: f64, margin: f64, pick: f64, along: f64) -> (f64, f64) {
+        let s = size * d.scale;
+        let m = margin * d.scale;
+        let work = d.work;
+        let fits = |r: &Rect| r.w >= 3.0 * s && r.y - s * FEET >= work.y && r.x >= work.x && r.x + r.w <= work.x + work.w;
+        if let Some(r) = ledge.filter(|r| pick < 0.4 && fits(r)) {
+            return (r.x + along * (r.w - s), r.y - s * FEET);
+        }
+        let x = work.x + m + along * (work.w - s - 2.0 * m).max(0.0);
+        (x, work.y + work.h - s - m)
+    }
 }
 
 use logic::{Display, Rect};
@@ -876,6 +902,46 @@ pub async fn desktop_mochi_fly_home(app: AppHandle, forget: bool) -> bool {
     done
 }
 
+/// A stroll (Windows), asked by his page now and then while he is awake: up
+/// onto the top edge of the window in front, or along the bottom of the
+/// screen, at walking pace. His saved spot stays where the user put him.
+/// Returns the walk's length in ms and its direction (-1 left, 1 right), or
+/// None when he stays put (asleep, carried, flying, not on Windows).
+#[tauri::command]
+pub async fn desktop_mochi_stroll(app: AppHandle, pick: f64, along: f64) -> Option<(u64, i8)> {
+    let d = app.state::<Arc<Desktop>>().inner().clone();
+    if d.mode != DesktopMode::Poll {
+        return None;
+    }
+    let from = {
+        let i = d.inner.lock().unwrap();
+        if !i.shown || !i.landed || i.asleep || i.carry.is_some() {
+            return None;
+        }
+        i.pos
+    };
+    let s = side(&app, &d);
+    let all = displays(&app, &d);
+    let home = logic::display_near((from.0 + s / 2.0, from.1 + s / 2.0), &all)?;
+    let ledge = platform::front_window_ledge().map(|(x, y, w, h)| Rect { x, y, w, h });
+    let to = logic::stroll_target(&home, ledge, SIZE, MARGIN, pick.clamp(0.0, 1.0), along.clamp(0.0, 1.0));
+    let distance = (to.0 - from.0).hypot(to.1 - from.1);
+    let ms = ((distance / (logic::WALK_SPEED * home.scale)) * 1000.0).clamp(300.0, 9000.0) as u64;
+    let dir = if to.0 < from.0 { -1 } else { 1 };
+    let app2 = app.clone();
+    tauri::async_runtime::spawn(async move {
+        let d = app2.state::<Arc<Desktop>>().inner().clone();
+        d.inner.lock().unwrap().landed = false;
+        let done = fly(&app2, &d, to, ms, logic::linear).await;
+        // Taken over by a drag or a flight home: that one says where he is.
+        if done {
+            d.inner.lock().unwrap().landed = true;
+            refresh(&app2, &d);
+        }
+    });
+    Some((ms, dir))
+}
+
 /// The page dozed off (or woke up). Asleep, nothing polls.
 #[tauri::command]
 pub fn desktop_mochi_set_asleep(app: AppHandle, desktop: State<Arc<Desktop>>, asleep: bool) {
@@ -896,6 +962,24 @@ mod tests {
 
     // Mirrors tests/DesktopLuLuTests.swift (isOverBody, clampOrigin), in the
     // y-down coordinates every PC uses.
+
+    #[test]
+    fn a_stroll_goes_up_on_the_front_window_or_along_the_bottom() {
+        let work = Rect { x: 0.0, y: 0.0, w: 1920.0, h: 1040.0 };
+        let d = Display { frame: Rect { h: 1080.0, ..work }, work, scale: 1.0 };
+        let window = Rect { x: 300.0, y: 200.0, w: 800.0, h: 600.0 };
+        // Up on its top edge, his feet on the line.
+        assert_eq!(stroll_target(&d, Some(window), 120.0, 24.0, 0.1, 0.0), (300.0, 200.0 - 96.0));
+        assert_eq!(stroll_target(&d, Some(window), 120.0, 24.0, 0.1, 1.0), (1100.0 - 120.0, 104.0));
+        // Otherwise, or with no room above it, or no window: the bottom of the work area.
+        let bottom = 1040.0 - 120.0 - 24.0;
+        assert_eq!(stroll_target(&d, Some(window), 120.0, 24.0, 0.9, 0.0), (24.0, bottom));
+        let top = Rect { y: 40.0, ..window };
+        assert_eq!(stroll_target(&d, Some(top), 120.0, 24.0, 0.1, 0.0).1, bottom);
+        let narrow = Rect { w: 200.0, ..window };
+        assert_eq!(stroll_target(&d, Some(narrow), 120.0, 24.0, 0.1, 0.0).1, bottom);
+        assert_eq!(stroll_target(&d, None, 120.0, 24.0, 0.1, 1.0), (1920.0 - 24.0 - 120.0, bottom));
+    }
 
     #[test]
     fn is_over_body() {
