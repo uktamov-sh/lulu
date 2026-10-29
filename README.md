@@ -94,4 +94,4 @@ certificate by [SignPath Foundation](https://signpath.org/).
   the AI service you configure, and so do "Explain requests" (the tool, the
   folder and the command) and the chat's memory (a short note kept in
   `%APPDATA%\LuLu\memory.txt`), both off by default. Tasks stay in
-  `%APPDATA%\LuLu	asks.json`. There is no telemetry.
+  `%APPDATA%\LuLu\tasks.json`. There is no telemetry.
