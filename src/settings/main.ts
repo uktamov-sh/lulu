@@ -214,7 +214,7 @@ function claudeSection(status: HookStatus): HTMLElement {
         h("label", { text: t("Answer permission requests by voice") }),
         toggle(settings.voiceApprovals, (on) => { settings.voiceApprovals = on; void save(); }),
       ),
-      h("div", { class: "hint", text: t("Say « OK LuLu, allow » or « OK LuLu, deny » while a card waits. It needs « OK LuLu » turned on. Allow is refused for a risky or long command and when several cards wait; deny always works. Anyone the microphone hears could answer, so keep this off in a shared room.") }),
+      h("div", { class: "hint", text: t("Say « OK LuLu, allow » or « OK LuLu, deny » while a card waits. It needs « OK LuLu » turned on. By voice, Allow works only for reading a file of the project and for git status, git diff, git log, ls and pwd; anything else needs the buttons. Deny always works. Anyone the microphone hears could answer, so keep this off in a shared room.") }),
       h("div", { class: "row" },
         h("label", { text: t("Explain requests in plain words") }),
         toggle(settings.explainRequests, (on) => { settings.explainRequests = on; void save(); }),

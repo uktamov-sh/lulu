@@ -342,12 +342,14 @@ pub fn prepare(app: &AppHandle, payload: &Value) -> Option<Draft> {
     self::core::draft(payload, hide)
 }
 
-/// What a waiting request asks for — the tool, its command or file, and whether
-/// that was cut short — for the voice's look at risk (voice::approval::allow_ok).
-/// None for a question: those have options, not Allow / Deny.
-pub fn describe(payload: &Value) -> Option<(String, String, bool)> {
+/// What a waiting request asks for — the tool, its command or file, the
+/// project folder, and whether the target was cut short — for the voice's look
+/// at risk (voice::approval::allow_ok). None for a question: those have
+/// options, not Allow / Deny.
+pub fn describe(payload: &Value) -> Option<(String, String, String, bool)> {
     let draft = self::core::draft(payload, false)?;
-    Some((draft.tool, draft.target.unwrap_or_default(), draft.truncated))
+    let cwd = payload.get("cwd").and_then(Value::as_str).unwrap_or_default().to_string();
+    Some((draft.tool, draft.target.unwrap_or_default(), cwd, draft.truncated))
 }
 
 /// A plain message to the paired chat (a task's reminder, tasks.rs), when

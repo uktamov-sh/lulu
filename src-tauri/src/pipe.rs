@@ -237,7 +237,7 @@ async fn handle(app: AppHandle, mut pipe: impl Relay) {
     let mut card = crate::telegram::prepare(&app, &payload);
     // For the voice: only once the island has the card on screen (below).
     let mut voice_card = crate::telegram::describe(&payload)
-        .map(|(tool, target, cut)| (id.clone(), !cut && crate::voice::approval::allow_ok(&tool, &target)));
+        .map(|(tool, target, cwd, cut)| (id.clone(), !cut && crate::voice::approval::allow_ok(&tool, &target, &cwd)));
     payload["request_id"] = json!(id);
     log::line(format!("hook PermissionRequest id={id}"));
     let _ = app.emit_to(WINDOW_LABEL, "hook", payload);
