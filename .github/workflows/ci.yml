@@ -1,0 +1,51 @@
+name: CI
+
+# Type-checks and tests LuLu on every push and pull request. Nothing is packed
+# and nothing is published: releases are release.yml, on tags only.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      # The tests run the TypeScript sources directly: Node 22.18 or newer.
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Cache cargo
+        uses: actions/cache@v6
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ci-cargo-${{ hashFiles('Cargo.lock') }}
+          restore-keys: ci-cargo-
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Island tests
+        run: npm test
+
+      # tauri-build bundles lulu-hook.exe as a resource, so it is built first.
+      - name: Rust tests
+        run: |
+          cargo build --release -p lulu-hook
+          cargo test --workspace

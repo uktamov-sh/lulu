@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <title>LuLu — panda preview</title>
+    <style>
+      body { margin: 0; background: #1b1b1f; font: 13px system-ui; color: #ddd; }
+      h1 { font: 600 18px system-ui; text-align: center; margin: 20px 0 4px; }
+      #grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; padding: 16px; }
+      figure { margin: 0; text-align: center; background: #26262c; border-radius: 16px; padding: 8px 8px 10px; }
+      figcaption { margin-top: 4px; color: #aaa; }
+      .light { background: #f3f1ec; }
+      .light figcaption { color: #555; }
+    </style>
+  </head>
+  <body>
+    <h1>LuLu — превью панды</h1>
+    <div id="grid"></div>
+    <script type="module" src="./panda-preview.ts"></script>
+  </body>
+</html>

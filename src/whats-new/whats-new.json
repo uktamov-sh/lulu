@@ -1,0 +1,115 @@
+{
+  "about": "What's new, shown once in the island after LuLu updates itself (src/whats-new/). Every Windows and Linux release adds its entry here, in the 12 languages: 1 to 4 items, a short title and one line each, an icon from scripts/test-whats-new.py. python3 scripts/test-whats-new.py checks it.",
+  "releases": [
+    {
+      "version": "0.1.0",
+      "items": [
+        {
+          "icon": "heart",
+          "title": {
+            "en": "Meet LuLu",
+            "zh-Hans": "认识 LuLu",
+            "hi": "LuLu से मिलिए",
+            "es": "Conoce a LuLu",
+            "ar": "تعرّف على LuLu",
+            "fr": "Voici LuLu",
+            "bn": "LuLu-র সাথে পরিচয়",
+            "pt-BR": "Conheça a LuLu",
+            "ru": "Знакомьтесь, LuLu",
+            "id": "Kenalan dengan LuLu",
+            "de": "Das ist LuLu",
+            "tr": "LuLu ile tanış",
+            "uz": "LuLu bilan tanishing",
+            "uz-yangi": "LuLu bilan tanişing"
+          },
+          "detail": {
+            "en": "A panda at the top of your screen, with a doppi, a bandit scarf and a wardrobe that changes by itself.",
+            "zh-Hans": "屏幕顶部的一只熊猫，戴着朵帕帽、强盗头巾，衣柜还会自己换装。",
+            "hi": "स्क्रीन के ऊपर एक पांडा — दोप्पी, बैंडिट रूमाल और खुद बदलने वाली अलमारी के साथ।",
+            "es": "Una panda en lo alto de tu pantalla, con doppi, pañuelo de bandido y un armario que cambia solo.",
+            "ar": "باندا في أعلى شاشتك، مع قبعة دوبّي ووشاح لصّ وخزانة ملابس تتبدّل وحدها.",
+            "fr": "Une panda en haut de ton écran, avec un doppi, un foulard de bandit et une garde-robe qui change toute seule.",
+            "bn": "স্ক্রিনের ওপরে একটি পান্ডা — দোপ্পি, ডাকাতের রুমাল আর নিজে থেকে বদলানো পোশাকের আলমারি।",
+            "pt-BR": "Uma panda no topo da tela, com doppi, lenço de bandido e um guarda-roupa que muda sozinho.",
+            "ru": "Панда наверху экрана: тюбетейка, бандитский платок и гардероб, который меняется сам.",
+            "id": "Panda di bagian atas layar, dengan doppi, syal bandit, dan lemari yang berganti sendiri.",
+            "de": "Ein Panda oben auf deinem Bildschirm, mit Doppi, Banditentuch und einer Garderobe, die sich selbst wechselt.",
+            "tr": "Ekranının üstünde bir panda: doppi, haydut eşarbı ve kendi kendine değişen bir gardırop.",
+            "uz": "Ekraningiz tepasidagi panda: doʻppi, bandit roʻmoli va oʻzi almashadigan garderob.",
+            "uz-yangi": "Ekraningiz tepasidagi panda: döppi, bandit römoli va özi almaşadigan garderob."
+          }
+        },
+        {
+          "icon": "phone",
+          "title": {
+            "en": "Allow from Telegram",
+            "zh-Hans": "在 Telegram 中允许",
+            "hi": "Telegram से अनुमति दें",
+            "es": "Permite desde Telegram",
+            "ar": "السماح من Telegram",
+            "fr": "Autorise depuis Telegram",
+            "bn": "Telegram থেকে অনুমতি দিন",
+            "pt-BR": "Permita pelo Telegram",
+            "ru": "Разрешайте из Telegram",
+            "id": "Izinkan dari Telegram",
+            "de": "Erlauben aus Telegram",
+            "tr": "Telegram’dan izin ver",
+            "uz": "Telegramdan ruxsat bering",
+            "uz-yangi": "Telegramdan ruxsat bering"
+          },
+          "detail": {
+            "en": "Your agents' permission requests reach your own Telegram bot, with Allow and Deny buttons.",
+            "zh-Hans": "代理的权限请求会发送到你自己的 Telegram 机器人，并带有允许和拒绝按钮。",
+            "hi": "आपके एजेंटों के अनुमति अनुरोध आपके अपने Telegram बॉट तक अनुमति दें और अस्वीकार करें बटनों के साथ पहुँचते हैं।",
+            "es": "Las solicitudes de permiso de tus agentes llegan a tu propio bot de Telegram, con botones Permitir y Denegar.",
+            "ar": "تصل طلبات الإذن من وكلائك إلى بوت Telegram الخاص بك، مع زرَّي السماح والرفض.",
+            "fr": "Les demandes d’autorisation de tes agents arrivent sur ton propre bot Telegram, avec les boutons Autoriser et Refuser.",
+            "bn": "আপনার এজেন্টদের অনুমতির অনুরোধ আপনার নিজের Telegram বটে পৌঁছায়, অনুমতি ও প্রত্যাখ্যান বোতামসহ।",
+            "pt-BR": "Os pedidos de permissão dos seus agentes chegam ao seu próprio bot do Telegram, com botões Permitir e Negar.",
+            "ru": "Запросы разрешений от агентов приходят в ваш собственный Telegram-бот с кнопками «Разрешить» и «Отказать».",
+            "id": "Permintaan izin agenmu sampai ke bot Telegram milikmu, dengan tombol Izinkan dan Tolak.",
+            "de": "Die Berechtigungsanfragen deiner Agenten kommen in deinem eigenen Telegram-Bot an, mit Erlauben und Ablehnen.",
+            "tr": "Ajanlarının izin istekleri kendi Telegram botuna İzin ver ve Reddet düğmeleriyle gelir.",
+            "uz": "Agentlaringizning ruxsat soʻrovlari oʻz Telegram botingizga «Ruxsat berish» va «Rad etish» tugmalari bilan keladi.",
+            "uz-yangi": "Agentlaringizning ruxsat sörovlari öz Telegram botingizga «Ruxsat beriş» va «Rad etiş» tugmalari bilan keladi."
+          }
+        },
+        {
+          "icon": "languages",
+          "title": {
+            "en": "In Uzbek, both alphabets",
+            "zh-Hans": "乌兹别克语，两种字母",
+            "hi": "उज़्बेक में, दोनों वर्णमालाओं में",
+            "es": "En uzbeko, con ambos alfabetos",
+            "ar": "بالأوزبكية، بالأبجديتين",
+            "fr": "En ouzbek, dans les deux alphabets",
+            "bn": "উজবেক ভাষায়, দুই বর্ণমালায়",
+            "pt-BR": "Em uzbeque, nos dois alfabetos",
+            "ru": "По-узбекски, обоими алфавитами",
+            "id": "Dalam bahasa Uzbek, dua alfabet",
+            "de": "Auf Usbekisch, in beiden Alphabeten",
+            "tr": "Özbekçe, iki alfabeyle",
+            "uz": "Oʻzbekcha, ikkala alifboda",
+            "uz-yangi": "Özbekça, ikkala alifboda"
+          },
+          "detail": {
+            "en": "Oʻzbekcha in today's Latin alphabet and Özbekça in the new one, next to twelve other languages.",
+            "zh-Hans": "今天的拉丁字母乌兹别克语和新字母乌兹别克语，还有另外十二种语言。",
+            "hi": "आज की लैटिन वर्णमाला में Oʻzbekcha और नई में Özbekça, बारह अन्य भाषाओं के साथ।",
+            "es": "Oʻzbekcha en el alfabeto latino actual y Özbekça en el nuevo, junto a otros doce idiomas.",
+            "ar": "Oʻzbekcha بالأبجدية اللاتينية الحالية وÖzbekça بالجديدة، إلى جانب اثنتي عشرة لغة أخرى.",
+            "fr": "Oʻzbekcha dans l’alphabet latin actuel et Özbekça dans le nouveau, à côté de douze autres langues.",
+            "bn": "আজকের লাতিন বর্ণমালায় Oʻzbekcha আর নতুনটিতে Özbekça, আরও বারোটি ভাষার পাশাপাশি।",
+            "pt-BR": "Oʻzbekcha no alfabeto latino atual e Özbekça no novo, ao lado de outros doze idiomas.",
+            "ru": "Oʻzbekcha на нынешней латинице и Özbekça на новом алфавите, вместе с ещё двенадцатью языками.",
+            "id": "Oʻzbekcha dalam alfabet Latin saat ini dan Özbekça dalam yang baru, bersama dua belas bahasa lain.",
+            "de": "Oʻzbekcha im heutigen lateinischen Alphabet und Özbekça im neuen, neben zwölf weiteren Sprachen.",
+            "tr": "Bugünkü Latin alfabesiyle Oʻzbekcha ve yenisiyle Özbekça, on iki dilin yanında.",
+            "uz": "Hozirgi lotin alifbosida Oʻzbekcha va yangisida Özbekça, yana oʻn ikki til bilan birga.",
+            "uz-yangi": "Hozirgi lotin alifbosida Oʻzbekcha va yangisida Özbekça, yana ön ikki til bilan birga."
+          }
+        }
+      ]
+    }
+  ]
+}
