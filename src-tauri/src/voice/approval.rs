@@ -88,6 +88,21 @@ const SAFE_COMMANDS: &[&str] = &["git status", "git diff", "git log", "ls", "dir
 /// (`--no-index`).
 const SAFE_FLAGS: &[&str] = &["--stat", "--oneline", "--short", "--no-color", "--cached", "--staged", "--name-only"];
 
+/// A plain local path on a drive (`C:\dir\file`, `C:/dir/file`): not a network
+/// path, not a device or `\\?\` path, no alternate stream (`file:stream`), no
+/// `..` and none of the characters Windows reserves.
+fn local_drive_path(path: &str) -> bool {
+    let b = path.as_bytes();
+    if b.len() < 3 || !b[0].is_ascii_alphabetic() || b[1] != b':' || !(b[2] == b'\\' || b[2] == b'/') {
+        return false;
+    }
+    let rest = &path[2..];
+    if rest.starts_with("\\\\") || rest.starts_with("//") || rest.contains(['?', '*', '"', '<', '>', '|', ':']) {
+        return false;
+    }
+    !rest.split(['\\', '/']).any(|part| part == "..")
+}
+
 /// A file inside the project folder (`cwd`): both paths are resolved on disk
 /// first (links followed, short 8.3 names spelled out), so a symlink or a
 /// `PROGRA~1`-style name cannot lead out; then no hidden folder or file may
@@ -95,7 +110,9 @@ const SAFE_FLAGS: &[&str] = &["--stat", "--oneline", "--short", "--no-color", "-
 /// that cannot be resolved, such as a file that does not exist, is refused.
 fn inside_project(cwd: &str, path: &str) -> bool {
     use std::path::Component;
-    if cwd.is_empty() || path.contains('~') {
+    // Before the disk is touched at all: resolving a network path (\\server\share)
+    // would make Windows reach out to that server and hand over a login hash.
+    if !local_drive_path(cwd) || !local_drive_path(path) || path.contains('~') {
         return false;
     }
     let (Ok(base), Ok(real)) = (std::fs::canonicalize(cwd), std::fs::canonicalize(path)) else { return false };
@@ -163,6 +180,11 @@ mod tests {
         assert!(!allow_ok("Read", &outside.to_string_lossy(), &cwd));
         assert!(!allow_ok("Read", &file("src/main.ts"), ""));
         assert!(!allow_ok("Read", &file("SRC~1/main.ts"), &cwd));
+        // Network, device and stream paths are refused before the disk is asked.
+        for bad in ["\\\\evil\\share\\f.txt", "//evil/share/f.txt", "\\\\?\\C:\\p\\f.txt", "\\\\.\\C:\\p\\f.txt", "C:\\p\\src\\main.ts:stream", "relative\\f.txt", "C:f.txt"] {
+            assert!(!allow_ok("Read", bad, &cwd), "{bad}");
+            assert!(!allow_ok("Read", &file("src/main.ts"), bad), "cwd {bad}");
+        }
         // The folder itself is not a file of it.
         assert!(!allow_ok("Read", &cwd, &cwd));
         let _ = std::fs::remove_dir_all(&root);
