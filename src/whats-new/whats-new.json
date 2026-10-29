@@ -2,7 +2,7 @@
   "about": "What's new, shown once in the island after LuLu updates itself (src/whats-new/). Every Windows and Linux release adds its entry here, in the 12 languages: 1 to 4 items, a short title and one line each, an icon from scripts/test-whats-new.py. python3 scripts/test-whats-new.py checks it.",
   "releases": [
     {
-      "version": "0.3.2",
+      "version": "0.3.3",
       "items": [
         {
           "icon": "shield",

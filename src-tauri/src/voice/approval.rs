@@ -88,20 +88,26 @@ const SAFE_COMMANDS: &[&str] = &["git status", "git diff", "git log", "ls", "dir
 /// (`--no-index`).
 const SAFE_FLAGS: &[&str] = &["--stat", "--oneline", "--short", "--no-color", "--cached", "--staged", "--name-only"];
 
-/// A path as one comparable string: slashes forward, lower case, no trailing slash.
-fn flat(path: &str) -> String {
-    path.replace('\\', "/").to_lowercase().trim_end_matches('/').to_string()
-}
-
-/// A file inside the project folder (`cwd`), by an absolute path with no `..`
-/// and no hidden folder or file on the way (`.git`, `.ssh`, `.env`…).
+/// A file inside the project folder (`cwd`): both paths are resolved on disk
+/// first (links followed, short 8.3 names spelled out), so a symlink or a
+/// `PROGRA~1`-style name cannot lead out; then no hidden folder or file may
+/// lie between the project and the file (`.git`, `.ssh`, `.env`…). A path
+/// that cannot be resolved, such as a file that does not exist, is refused.
 fn inside_project(cwd: &str, path: &str) -> bool {
-    let (cwd, path) = (flat(cwd), flat(path));
-    if cwd.is_empty() {
+    use std::path::Component;
+    if cwd.is_empty() || path.contains('~') {
         return false;
     }
-    let Some(rest) = path.strip_prefix(&format!("{cwd}/")) else { return false };
-    rest.split('/').all(|part| !part.is_empty() && part != ".." && !part.starts_with('.'))
+    let (Ok(base), Ok(real)) = (std::fs::canonicalize(cwd), std::fs::canonicalize(path)) else { return false };
+    let Ok(rest) = real.strip_prefix(&base) else { return false };
+    let mut parts = 0;
+    for part in rest.components() {
+        match part {
+            Component::Normal(name) if !name.to_string_lossy().starts_with('.') => parts += 1,
+            _ => return false,
+        }
+    }
+    parts > 0
 }
 
 /// Whether Allow may come by voice for this request: reading a file of the
@@ -119,10 +125,17 @@ pub fn allow_ok(tool: &str, target: &str, cwd: &str) -> bool {
     if command.is_empty() || command.chars().any(|c| ";&|<>`$(){}\\\n\r".contains(c)) {
         return false;
     }
-    let known = SAFE_COMMANDS.iter().any(|safe| command == *safe || command.starts_with(&format!("{safe} ")));
-    // Every option must be one of the few above: "git diff --output=x" writes a file.
-    let options_ok = command.split_whitespace().skip(1).all(|t| !t.starts_with('-') || SAFE_FLAGS.contains(&t));
-    known && options_ok && !crate::explain::looks_risky(command)
+    // What follows the command itself.
+    let Some(rest) = SAFE_COMMANDS
+        .iter()
+        .find_map(|safe| if command == *safe { Some("") } else { command.strip_prefix(&format!("{safe} ")) })
+    else {
+        return false;
+    };
+    // Nothing after the command but the few options above: "git diff --output=x"
+    // writes a file, and a path or a revision ("ls C:\\Users\\me\\.ssh") would
+    // point the command somewhere nobody has looked at.
+    rest.split_whitespace().all(|t| SAFE_FLAGS.contains(&t)) && !crate::explain::looks_risky(command)
 }
 
 #[cfg(test)]
@@ -130,10 +143,35 @@ mod tests {
     use super::*;
 
     #[test]
+    fn only_a_real_file_inside_the_project_counts() {
+        let tmp = std::env::temp_dir();
+        let root = tmp.join(format!("lulu-voice-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&root);
+        std::fs::create_dir_all(root.join("src")).unwrap();
+        std::fs::create_dir_all(root.join(".git")).unwrap();
+        std::fs::write(root.join("src").join("main.ts"), "x").unwrap();
+        std::fs::write(root.join(".git").join("config"), "x").unwrap();
+        let outside = tmp.join(format!("lulu-voice-outside-{}.txt", std::process::id()));
+        std::fs::write(&outside, "x").unwrap();
+        let cwd = root.to_string_lossy().to_string();
+        let file = |p: &str| root.join(p).to_string_lossy().to_string();
+        assert!(allow_ok("Read", &file("src/main.ts"), &cwd));
+        // Hidden, missing, climbing out, outside, no project, a short 8.3 name.
+        assert!(!allow_ok("Read", &file(".git/config"), &cwd));
+        assert!(!allow_ok("Read", &file("src/missing.ts"), &cwd));
+        assert!(!allow_ok("Read", &file("src/../../x"), &cwd));
+        assert!(!allow_ok("Read", &outside.to_string_lossy(), &cwd));
+        assert!(!allow_ok("Read", &file("src/main.ts"), ""));
+        assert!(!allow_ok("Read", &file("SRC~1/main.ts"), &cwd));
+        // The folder itself is not a file of it.
+        assert!(!allow_ok("Read", &cwd, &cwd));
+        let _ = std::fs::remove_dir_all(&root);
+        let _ = std::fs::remove_file(&outside);
+    }
+
+    #[test]
     fn allow_by_voice_is_for_reading_the_project_and_commands_that_only_look() {
         let cwd = "C:\\p";
-        assert!(allow_ok("Read", "C:\\p\\src\\main.ts", cwd));
-        assert!(allow_ok("Read", "c:/P/src/main.ts", cwd));
         assert!(allow_ok("Bash", "git status", cwd));
         assert!(allow_ok("Bash", "ls", cwd));
         // Outside the project, hidden, a pattern instead of a path, or climbing out.
@@ -144,7 +182,6 @@ mod tests {
         assert!(!allow_ok("Grep", "TODO", cwd));
         assert!(!allow_ok("Grep", "C:\\p\\src", cwd));
         assert!(!allow_ok("Glob", "C:\\p\\src", cwd));
-        assert!(!allow_ok("Read", "C:\\p\\src\\main.ts", ""));
         // A test runner or a build runs the project's own code: the buttons.
         assert!(!allow_ok("Bash", "npm test", cwd));
         assert!(!allow_ok("Bash", "cargo test --workspace", cwd));
@@ -174,6 +211,13 @@ mod tests {
         assert!(!allow_ok("Bash", "cargo test --config build.rustc='x'", cwd));
         assert!(!allow_ok("Bash", "npm test -- --watch", cwd));
         assert!(allow_ok("Bash", "git diff --stat", cwd));
+        assert!(allow_ok("Bash", "git log --oneline --no-color", cwd));
+        // No path or revision after the command: it would look somewhere unchecked.
+        assert!(!allow_ok("Bash", "ls C:\\Users\\me\\.ssh", cwd));
+        assert!(!allow_ok("Bash", "dir ..", cwd));
+        assert!(!allow_ok("Bash", "git diff HEAD", cwd));
+        assert!(!allow_ok("Bash", "git diff C:/secret.txt", cwd));
+        assert!(!allow_ok("Bash", "git log -5", cwd));
         assert!(!allow_ok("Bash", "cargo test --workspace --release", cwd));
         // Whole words: "lsof", "directory" are not "ls", "dir".
         assert!(!allow_ok("Bash", "lsof -i", cwd));
