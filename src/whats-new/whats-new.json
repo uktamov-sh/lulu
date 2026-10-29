@@ -2,6 +2,46 @@
   "about": "What's new, shown once in the island after LuLu updates itself (src/whats-new/). Every Windows and Linux release adds its entry here, in the 12 languages: 1 to 4 items, a short title and one line each, an icon from scripts/test-whats-new.py. python3 scripts/test-whats-new.py checks it.",
   "releases": [
     {
+      "version": "0.2.1",
+      "items": [
+        {
+          "icon": "shield",
+          "title": {
+            "en": "Safer explanations",
+            "zh-Hans": "更安全的解释",
+            "hi": "अधिक सुरक्षित व्याख्या",
+            "es": "Explicaciones más seguras",
+            "ar": "شروح أكثر أمانًا",
+            "fr": "Des explications plus sûres",
+            "bn": "আরও নিরাপদ ব্যাখ্যা",
+            "pt-BR": "Explicações mais seguras",
+            "ru": "Объяснения надёжнее",
+            "id": "Penjelasan lebih aman",
+            "de": "Sicherere Erklärungen",
+            "tr": "Daha güvenli açıklamalar",
+            "uz": "Ishonchliroq tushuntirishlar",
+            "uz-yangi": "Işonçliroq tuşuntirişlar"
+          },
+          "detail": {
+            "en": "A command can no longer talk the AI into a ✅, and the chat's memory keeps only your own words.",
+            "zh-Hans": "命令无法再诱使 AI 给出 ✅，聊天记忆只保留你自己说的话。",
+            "hi": "कोई कमांड अब AI से ✅ नहीं दिलवा सकती, और चैट की स्मृति सिर्फ़ आपके अपने शब्द रखती है।",
+            "es": "Un comando ya no puede convencer a la IA de dar un ✅, y la memoria del chat guarda solo tus propias palabras.",
+            "ar": "لم يعد بإمكان أمر أن يقنع الذكاء الاصطناعي بإعطاء ✅، وذاكرة الدردشة تحفظ كلماتك أنت فقط.",
+            "fr": "Une commande ne peut plus pousser l’IA à donner un ✅, et la mémoire du chat ne garde que tes propres mots.",
+            "bn": "কোনো কমান্ড আর AI-কে দিয়ে ✅ দেওয়াতে পারে না, আর চ্যাটের স্মৃতি শুধু আপনার নিজের কথা রাখে।",
+            "pt-BR": "Um comando não consegue mais convencer a IA a dar um ✅, e a memória do chat guarda só as suas palavras.",
+            "ru": "Команда больше не может уговорить ИИ поставить ✅, а память чата хранит только ваши собственные слова.",
+            "id": "Perintah tidak bisa lagi membujuk AI memberi ✅, dan memori obrolan hanya menyimpan kata-katamu sendiri.",
+            "de": "Ein Befehl kann die KI nicht mehr zu einem ✅ überreden, und das Chat-Gedächtnis behält nur deine eigenen Worte.",
+            "tr": "Bir komut artık yapay zekâyı ✅ vermeye ikna edemez; sohbet hafızası yalnızca senin sözlerini tutar.",
+            "uz": "Endi buyruq sunʼiy intellektni ✅ qoʻyishga koʻndira olmaydi, chat xotirasi esa faqat oʻz soʻzlaringizni saqlaydi.",
+            "uz-yangi": "Endi buyruq sunʼiy intellektni ✅ qöyişga köndira olmaydi, çat xotirasi esa faqat öz sözlaringizni saqlaydi."
+          }
+        }
+      ]
+    },
+    {
       "version": "0.2.0",
       "items": [
         {
