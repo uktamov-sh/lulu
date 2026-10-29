@@ -243,6 +243,7 @@ export function registerHookHandlers(island: Island) {
   State.planUsage ??= restorePlanUsage(storedClaudePlanUsage());
   void onEvent<HookPayload>("hook", (payload) => handleHook(island, payload));
   void onEvent<TelegramDecision>("telegram-decided", (d) => telegramDecided(island, d));
+  void onEvent<TelegramDecision>("voice-decided", (d) => voiceDecided(island, d));
 }
 
 interface TelegramDecision {
@@ -255,13 +256,22 @@ interface TelegramDecision {
  * The card goes, and the pill says where the request was decided.
  */
 export function telegramDecided(island: Island, d: TelegramDecision): void {
+  decidedElsewhere(island, d, `📱 ${t("Allowed from the phone")}`, `📱 ${t("Denied from the phone")}`);
+}
+
+/** "OK LuLu, allow / deny" was said: Rust has already answered the agent. */
+export function voiceDecided(island: Island, d: TelegramDecision): void {
+  decidedElsewhere(island, d, `🎙 ${t("Allowed by voice")}`, `🎙 ${t("Denied by voice")}`);
+}
+
+function decidedElsewhere(island: Island, d: TelegramDecision, allowed: string, denied: string): void {
   const pending = State.pendingApproval;
   if (!pending || !d || pending.requestId !== d.requestId) return;
   if (pendingTimeout != null) window.clearTimeout(pendingTimeout);
   pendingTimeout = null;
   Sound.play(d.allow ? "approve" : "blip");
   dropPendingCard(island);
-  State.appendStep(pending.pillId, `📱 ${d.allow ? t("Allowed from the phone") : t("Denied from the phone")}`);
+  State.appendStep(pending.pillId, d.allow ? allowed : denied);
   State.notify();
 }
 

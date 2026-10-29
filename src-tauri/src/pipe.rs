@@ -235,6 +235,10 @@ async fn handle(app: AppHandle, mut pipe: impl Relay) {
     crate::recap::note_request(&app, &id, &payload);
     // The phone's card, if Telegram approvals are on: sent once the island has it on screen.
     let mut card = crate::telegram::prepare(&app, &payload);
+    if let Some((line, cut)) = crate::telegram::describe(&payload) {
+        let risky = cut || crate::explain::looks_risky(&line);
+        WAITING.lock().unwrap().push((id.clone(), risky));
+    }
     payload["request_id"] = json!(id);
     log::line(format!("hook PermissionRequest id={id}"));
     let _ = app.emit_to(WINDOW_LABEL, "hook", payload);
@@ -246,6 +250,7 @@ async fn handle(app: AppHandle, mut pipe: impl Relay) {
     };
     let result = wait_for_decision(&id, &mut rx, ACK_TIMEOUT, DECISION_TIMEOUT, on_screen).await;
     app.state::<Pending>().0.lock().unwrap().remove(&id);
+    WAITING.lock().unwrap().retain(|(waiting, _)| waiting != &id);
     // However it ended, the phone's card says so (nothing to do when the phone answered it).
     if let Some(ending) = phone_ending(&result) {
         crate::telegram::settle(&app, &id, ending);
@@ -259,6 +264,52 @@ async fn handle(app: AppHandle, mut pipe: impl Relay) {
         let _ = pipe.flush().await;
     }
     pipe.finish();
+}
+
+/// Requests waiting for an answer that Allow / Deny can settle (not questions):
+/// the id, and whether Allow by voice is refused for it (a command that looks
+/// destructive, or one cut short).
+static WAITING: Mutex<Vec<(String, bool)>> = Mutex::new(Vec::new());
+
+/// A card waits, and "OK LuLu, allow" may be about it.
+pub fn something_waits() -> bool {
+    !WAITING.lock().unwrap().is_empty()
+}
+
+/// What answering by voice came to.
+#[derive(Debug, PartialEq, Eq)]
+pub enum VoiceResult {
+    Answered,
+    /// Allow refused: the command looks destructive or was cut short.
+    Risky,
+    Several,
+    NothingWaiting,
+}
+
+/// "OK LuLu, allow / deny" (voice/approval.rs): the one card waiting is
+/// answered like a button press; the island and the phone are told.
+pub fn voice_answer(app: &AppHandle, allow: bool) -> VoiceResult {
+    let id = {
+        let waiting = WAITING.lock().unwrap();
+        match waiting.as_slice() {
+            [] => return VoiceResult::NothingWaiting,
+            [(id, risky)] => {
+                if allow && *risky {
+                    return VoiceResult::Risky;
+                }
+                id.clone()
+            }
+            _ => return VoiceResult::Several,
+        }
+    };
+    let word = if allow { "allow" } else { "deny" };
+    if !answer(app, &id, word) {
+        return VoiceResult::NothingWaiting;
+    }
+    log::line(format!("voice: id={id} {word}"));
+    crate::recap::record_decision(app, &id, word);
+    let _ = app.emit_to(WINDOW_LABEL, "voice-decided", json!({ "requestId": id, "allow": allow }));
+    VoiceResult::Answered
 }
 
 /// Finds, once per session, the window it runs in — see session_window.rs.

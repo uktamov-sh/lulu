@@ -115,6 +115,8 @@ export interface Settings {
   explainRequests: boolean;
   /** The island chat remembers earlier conversations (src-tauri/src/memory.rs). */
   chatMemory: boolean;
+  /** "OK LuLu, allow / deny" answers the waiting card (src-tauri/src/voice/approval.rs). */
+  voiceApprovals: boolean;
   absenceInterval: number;
   /** Declared pills next to the main one (at most 4), in the order they were added. */
   activeIntegrations: string[];
@@ -186,6 +188,7 @@ export const DEFAULT_SETTINGS: Settings = {
   desktopApprovals: false,
   explainRequests: false,
   chatMemory: false,
+  voiceApprovals: false,
   absenceInterval: 180,
   activeIntegrations: [
     "integration_resend", "integration_n8n", "integration_vercel", "integration_github",

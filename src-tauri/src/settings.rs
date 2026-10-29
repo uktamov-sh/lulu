@@ -114,6 +114,9 @@ pub struct Settings {
     /// The island chat remembers earlier conversations in a short local note
     /// (memory.rs). Off by default.
     pub chat_memory: bool,
+    /// "OK LuLu, allow / deny" answers the waiting permission card (voice/approval.rs).
+    /// Off by default: anyone who can be heard by the microphone could answer.
+    pub voice_approvals: bool,
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
@@ -185,6 +188,7 @@ impl Default for Settings {
             desktop_approvals: false,
             explain_requests: false,
             chat_memory: false,
+            voice_approvals: false,
         }
     }
 }
@@ -477,7 +481,8 @@ mod tests {
   "danceToMusic": true,
   "desktopApprovals": true,
   "explainRequests": true,
-  "chatMemory": true
+  "chatMemory": true,
+  "voiceApprovals": true
 }"##;
 
     fn custom() -> Value {
@@ -1000,6 +1005,7 @@ mod tests {
                 "desktopApprovals",
                 "explainRequests",
                 "chatMemory",
+                "voiceApprovals",
             ]
         );
         let _ = std::fs::remove_dir_all(&dir);

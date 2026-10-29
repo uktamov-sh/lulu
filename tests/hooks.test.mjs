@@ -591,6 +591,19 @@ test("Deny pressed in Telegram says so on the pill", () => {
   assert.equal(task().steps.at(-1), "📱 Denied from the phone");
 });
 
+test("\"OK LuLu, allow\" takes the card down and the pill says it came by voice", () => {
+  ask("r1");
+  emit("voice-decided", { requestId: "r9", allow: true });
+  assert.equal(State.pendingApproval?.requestId, "r1");
+  emit("voice-decided", { requestId: "r1", allow: true });
+  assert.equal(State.pendingApproval, null);
+  assert.equal(task().steps.at(-1), "🎙 Allowed by voice");
+  assert.deepEqual(sent("approval_decision"), []);
+  ask("r2");
+  emit("voice-decided", { requestId: "r2", allow: false });
+  assert.equal(task().steps.at(-1), "🎙 Denied by voice");
+});
+
 // ── What takes over from a stop ───────────────────────────────────────────────
 // Stop arms a 5.2 s return to idle. A handler that writes a newer state cancels
 // it; one that writes none leaves it alone, or the pill would stay finished.

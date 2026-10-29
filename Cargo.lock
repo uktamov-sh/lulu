@@ -2515,7 +2515,7 @@ checksum = "4050469837a6ff301cd14c1f8f24f88549e6d548f24f64e2148eb0f72cebc51f"
 
 [[package]]
 name = "lulu"
-version = "0.2.3"
+version = "0.3.0"
 dependencies = [
  "arboard",
  "cpal",
@@ -2551,7 +2551,7 @@ dependencies = [
 
 [[package]]
 name = "lulu-hook"
-version = "0.2.3"
+version = "0.3.0"
 dependencies = [
  "libc",
  "serde_json",

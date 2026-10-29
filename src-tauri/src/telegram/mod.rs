@@ -342,6 +342,14 @@ pub fn prepare(app: &AppHandle, payload: &Value) -> Option<Draft> {
     self::core::draft(payload, hide)
 }
 
+/// What a waiting request asks for, as one line for the voice's look at risk
+/// (pipe::voice_answer), and whether the line was cut short. None for a
+/// question: those have options, not Allow / Deny.
+pub fn describe(payload: &Value) -> Option<(String, bool)> {
+    let draft = self::core::draft(payload, false)?;
+    Some((format!("{} {}", draft.tool, draft.target.unwrap_or_default()), draft.truncated))
+}
+
 /// A plain message to the paired chat (a task's reminder, tasks.rs), when
 /// Telegram is on and paired; otherwise nothing. Never waits.
 pub fn notify(app: &AppHandle, text: &str) {

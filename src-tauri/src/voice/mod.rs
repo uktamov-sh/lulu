@@ -12,6 +12,7 @@
 // It stops listening while you dictate, while a call is recorded and while it
 // speaks itself.
 
+pub mod approval;
 pub mod brain;
 pub mod wake;
 
@@ -23,7 +24,7 @@ use std::time::{Duration, Instant};
 
 use serde::Serialize;
 use serde_json::{json, Value};
-use tauri::{AppHandle, Emitter};
+use tauri::{AppHandle, Emitter, Manager};
 
 use crate::flow::pill;
 use crate::speech::{self, audio};
@@ -164,12 +165,13 @@ fn run(app: AppHandle, stop: Arc<AtomicBool>) {
             if heard.is_empty() {
                 continue;
             }
+            let follow_up = matches!(mode, Mode::FollowUp { .. });
             let question = match &mut mode {
                 Mode::Wake => match wake::after_wake(&heard) {
                     Some(rest) => {
                         crate::log::line("voice: « OK LuLu » heard");
                         hide_at = None;
-                        if crate::flow::text::word_count(&rest) >= 2 {
+                        if crate::flow::text::word_count(&rest) >= 2 || answers_a_card(&app, &rest) {
                             Some(rest)
                         } else {
                             show(&app, Some(VoiceView { phase: "listening".into(), heard: rest.clone(), answer: String::new() }));
@@ -190,6 +192,14 @@ fn run(app: AppHandle, stop: Arc<AtomicBool>) {
             let Some(question) = question else { continue };
             mode = Mode::Wake;
             vad.hangover = 25;
+            // "OK LuLu, allow": a waiting card is answered, no assistant needed.
+            if !follow_up && answers_a_card(&app, &question) {
+                let line = answer_card(&app, &question);
+                show(&app, Some(VoiceView { phase: "speaking".into(), heard: question.clone(), answer: line }));
+                hide_at = Some(Instant::now() + Duration::from_secs(4));
+                vad.reset();
+                continue;
+            }
             show(&app, Some(VoiceView { phase: "thinking".into(), heard: question.clone(), answer: String::new() }));
             let reply = brain.respond(&app, &question);
             let answer = reply.as_ref().map(|r| r.text.clone()).unwrap_or_default();
@@ -219,6 +229,27 @@ fn run(app: AppHandle, stop: Arc<AtomicBool>) {
     }
     capture.stop();
     show(&app, None);
+}
+
+// ── Answering a permission card ───────────────────────────────────────────────
+
+/// Settings → Agents → "Answer permission requests by voice" is on, a card waits,
+/// and `text` is only an answer to it.
+fn answers_a_card(app: &AppHandle, text: &str) -> bool {
+    let on = app.try_state::<crate::Shared>().is_some_and(|s| s.settings.lock().unwrap().voice_approvals);
+    on && crate::pipe::something_waits() && approval::verdict(text).is_some()
+}
+
+/// Answers the waiting card and returns the pill's line for how it went.
+fn answer_card(app: &AppHandle, text: &str) -> String {
+    use crate::pipe::VoiceResult;
+    let Some(verdict) = approval::verdict(text) else { return String::new() };
+    match crate::pipe::voice_answer(app, verdict == approval::Verdict::Allow) {
+        VoiceResult::Answered => "✓".into(),
+        VoiceResult::Risky => crate::i18n::t("This one looks risky: press Allow yourself."),
+        VoiceResult::Several => crate::i18n::t("Several requests are waiting: use the buttons."),
+        VoiceResult::NothingWaiting => crate::i18n::t("This request is already closed."),
+    }
 }
 
 // ── Speaking ──────────────────────────────────────────────────────────────────

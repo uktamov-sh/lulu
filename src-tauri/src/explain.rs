@@ -46,7 +46,7 @@ fn fresh_key() -> String {
 
 /// What makes a command worth a look whatever the AI says: deleting,
 /// overwriting, downloading and running, pushing over history, system changes.
-fn looks_risky(detail: &str) -> bool {
+pub(crate) fn looks_risky(detail: &str) -> bool {
     let d = detail.to_lowercase();
     const SIGNS: &[&str] = &[
         "rm ", "rm\t", "rmdir", "del ", "erase ", "remove-item", "rd /s", "format ", "mkfs", "dd ",

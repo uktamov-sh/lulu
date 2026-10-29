@@ -2,8 +2,43 @@
   "about": "What's new, shown once in the island after LuLu updates itself (src/whats-new/). Every Windows and Linux release adds its entry here, in the 12 languages: 1 to 4 items, a short title and one line each, an icon from scripts/test-whats-new.py. python3 scripts/test-whats-new.py checks it.",
   "releases": [
     {
-      "version": "0.2.3",
+      "version": "0.3.0",
       "items": [
+        {
+          "icon": "mic",
+          "title": {
+            "en": "Answer by voice",
+            "zh-Hans": "用语音回答",
+            "hi": "आवाज़ से जवाब",
+            "es": "Responde con la voz",
+            "ar": "أجب بصوتك",
+            "fr": "Réponds à la voix",
+            "bn": "ভয়েসে উত্তর দিন",
+            "pt-BR": "Responda por voz",
+            "ru": "Ответ голосом",
+            "id": "Jawab dengan suara",
+            "de": "Per Stimme antworten",
+            "tr": "Sesle yanıtla",
+            "uz": "Ovoz bilan javob bering",
+            "uz-yangi": "Ovoz bilan javob bering"
+          },
+          "detail": {
+            "en": "Say “OK LuLu, allow” or “OK LuLu, deny” while a card waits. Off by default: Settings → Agents.",
+            "zh-Hans": "卡片等待时说“OK LuLu，允许”或“OK LuLu，拒绝”。默认关闭：设置 → 代理。",
+            "hi": "कार्ड के इंतज़ार में कहें “OK LuLu, allow” या “OK LuLu, deny”। डिफ़ॉल्ट रूप से बंद: सेटिंग्स → एजेंट।",
+            "es": "Di “OK LuLu, permitir” o “OK LuLu, denegar” mientras espera una tarjeta. Desactivado por defecto: Ajustes → Agentes.",
+            "ar": "قل «OK LuLu، السماح» أو «OK LuLu، رفض» أثناء انتظار بطاقة. متوقف افتراضيًا: الإعدادات ← الوكلاء.",
+            "fr": "Dis « OK LuLu, autorise » ou « OK LuLu, refuse » pendant qu’une carte attend. Désactivé par défaut : Réglages → Agents.",
+            "bn": "কার্ড অপেক্ষায় থাকলে বলুন “OK LuLu, allow” বা “OK LuLu, deny”। ডিফল্টে বন্ধ: সেটিংস → এজেন্ট।",
+            "pt-BR": "Diga “OK LuLu, permitir” ou “OK LuLu, negar” enquanto um cartão espera. Desativado por padrão: Ajustes → Agentes.",
+            "ru": "Скажите «OK LuLu, разрешить» или «OK LuLu, отказать», пока карточка ждёт. По умолчанию выключено: Настройки → Агенты.",
+            "id": "Ucapkan “OK LuLu, izinkan” atau “OK LuLu, tolak” saat kartu menunggu. Mati secara bawaan: Pengaturan → Agen.",
+            "de": "Sage „OK LuLu, erlauben“ oder „OK LuLu, ablehnen“, während eine Karte wartet. Standardmäßig aus: Einstellungen → Agenten.",
+            "tr": "Kart beklerken “OK LuLu, izin ver” veya “OK LuLu, reddet” de. Varsayılan olarak kapalı: Ayarlar → Ajanlar.",
+            "uz": "Karta kutayotganda «OK LuLu, ruxsat ber» yoki «OK LuLu, rad et» deng. Odatda oʻchiq: Sozlamalar → Agentlar.",
+            "uz-yangi": "Karta kutayotganda «OK LuLu, ruxsat ber» yoki «OK LuLu, rad et» deng. Odatda öçiq: Sozlamalar → Agentlar."
+          }
+        },
         {
           "icon": "bolt",
           "title": {
