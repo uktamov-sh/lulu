@@ -1,7 +1,7 @@
 // Mini LuLus (pills + compact grid) — port of MiniBotCanvasView.
 // Each canvas owns a BotEngine; the island's frame loop ticks every live one.
 
-import { BotEngine, hexToRGB } from "./engine";
+import { BotEngine, hexToRGB, type BeatInfo } from "./engine";
 import type { AgentTask } from "../core/state";
 
 interface MiniBot {
@@ -14,6 +14,18 @@ interface MiniBot {
 }
 
 const live = new Map<HTMLCanvasElement, MiniBot>();
+
+/** The main LuLu dances: every mini without a rule of its own joins in. */
+let crowdDancing = false;
+
+export function setCrowdDancing(on: boolean) {
+  crowdDancing = on;
+}
+
+/** The computer's beat, for every mini to dance to in step with the main one. */
+export function hearBeatMinis(e: BeatInfo) {
+  for (const mb of live.values()) mb.engine.hearBeat(e);
+}
 
 /**
  * Creates a mini LuLu whose **body** is `bodySize` CSS pixels across.
@@ -79,7 +91,7 @@ export function tickMiniBots(dt: number) {
   for (const mb of live.values()) {
     const ctx = mb.canvas.getContext("2d");
     if (!ctx) continue;
-    mb.engine.setDancing(mb.dancing?.() ?? false);
+    mb.engine.setDancing(mb.dancing?.() ?? crowdDancing);
     mb.engine.update(dt);
     // Sized at creation: the island may have moved to a monitor of another scale.
     const px = Math.round(mb.cssSize * dpr);

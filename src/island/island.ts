@@ -16,7 +16,7 @@ import { clockDate, language } from "../i18n/i18n";
 import { SPOTIFY_ID, islandDances } from "../core/spotify";
 import { BotEngine, hexToRGB, type BeatInfo } from "../mochi/engine";
 import { Greeting } from "../mochi/greeting";
-import { createMiniBot, pruneMiniBots, syncMiniBotStates, tickMiniBots } from "../mochi/minibots";
+import { createMiniBot, hearBeatMinis, pruneMiniBots, setCrowdDancing, syncMiniBotStates, tickMiniBots } from "../mochi/minibots";
 import { SeasonCache, parseOutfit } from "../mochi/wardrobe";
 import { UploadCanvas } from "../upload/canvas";
 import { USC, UploadSeq } from "../upload/sequence";
@@ -513,6 +513,7 @@ export class Island {
   /** The beat of the computer's music (src-tauri/src/dance/). */
   hearBeat(e: BeatInfo) {
     this.engine.hearBeat(e);
+    hearBeatMinis(e);
     if (State.mode === "hidden") return;
     this.ensureRunning();
     // A dancing LuLu stays on screen: each beat starts the compact island's 60 s over.
@@ -1191,15 +1192,24 @@ export class Island {
     this.engine.setOutfit(showOutfit ? outfit : "none", !inWardrobe);
     // Dances while music plays: always in the compact island, expanded only on
     // the music pill's card (BotCanvasView, macOS). Asked every frame.
-    this.engine.setDancing(islandDances({
+    const dances = islandDances({
       music: State.spotifyPlaying || this.engine.followsBeat,
       state: State.effectiveState,
       mode: State.mode,
       view: State.view,
       focusId: State.focusTask?.id,
-    }));
+    });
+    this.engine.setDancing(dances);
+    // When the main LuLu dances, the minis (the pills, the compact grid) do too.
+    setCrowdDancing(dances);
 
     this.engine.update(dt);
+    // The beat fades 1.5 s after the music stops (engine.update): the desktop
+    // LuLu is told whenever it comes or goes (State.musicPlaying).
+    if (State.followsBeat !== this.engine.followsBeat) {
+      State.followsBeat = this.engine.followsBeat;
+      State.notify();
+    }
     ctx.setTransform(dpr, 0, 0, dpr, BOT_SIDE * dpr, 0);
     ctx.clearRect(-BOT_SIDE, 0, wCss, hCss);
     ctx.save();

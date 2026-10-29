@@ -9,16 +9,20 @@
 
 mod beat;
 
-use std::sync::mpsc::{self, Receiver, Sender};
+use std::sync::mpsc::{self, Receiver, RecvTimeoutError, Sender};
 use std::sync::{LazyLock, Mutex};
+use std::time::Duration;
 
 use tauri::{AppHandle, Emitter};
 
 use crate::island;
-use crate::speech::audio::{Capture, Source};
+use crate::speech::audio::{self, Capture, Source};
 use beat::{BeatDetector, BeatEvent};
 
 const EVENT: &str = "dance-beat";
+/// While listening, how often to look whether the speakers changed (headphones
+/// connected, another output chosen): loopback listens to one device only.
+const SPEAKERS_CHECK: Duration = Duration::from_secs(3);
 
 /// What wakes the dance thread.
 #[cfg_attr(not(windows), allow(dead_code))]
@@ -89,9 +93,11 @@ fn current(generation: u64) -> Option<bool> {
 fn run(app: AppHandle, generation: u64, tx: Sender<Wake>, rx: Receiver<Wake>) {
     let Some(mut media) = media::Watch::start(&tx) else { return };
     let mut capture: Option<Capture> = None;
+    let mut listening_on: Option<String> = None;
     while let Some(visible) = current(generation) {
         let want = visible && media.playing();
         if want && capture.is_none() {
+            listening_on = audio::default_output_name();
             capture = listen(&app);
         } else if !want && capture.is_some() {
             stop(&app, &mut capture);
@@ -100,7 +106,23 @@ fn run(app: AppHandle, generation: u64, tx: Sender<Wake>, rx: Receiver<Wake>) {
         // Events come in bursts (a new song moves everything): one look each.
         let mut rebind = false;
         let mut quit = false;
-        let Ok(first) = rx.recv() else { break };
+        let first = if capture.is_some() {
+            match rx.recv_timeout(SPEAKERS_CHECK) {
+                Ok(wake) => wake,
+                Err(RecvTimeoutError::Timeout) => {
+                    // Other speakers or headphones now: listen to them instead.
+                    if audio::default_output_name() != listening_on {
+                        crate::log::line("dance: the speakers changed, listening to the new ones");
+                        stop(&app, &mut capture);
+                    }
+                    continue;
+                }
+                Err(RecvTimeoutError::Disconnected) => break,
+            }
+        } else {
+            let Ok(wake) = rx.recv() else { break };
+            wake
+        };
         for wake in std::iter::once(first).chain(rx.try_iter()) {
             match wake {
                 Wake::Playback | Wake::Visible => {}
@@ -124,6 +146,8 @@ fn listen(app: &AppHandle) -> Option<Capture> {
     let sink = move |samples: &[f32]| {
         detector.feed(samples, |event| {
             let _ = app.emit_to(island::WINDOW_LABEL, EVENT, event);
+            // The desktop LuLu dances in step too.
+            let _ = app.emit_to(crate::desktop::LABEL, EVENT, event);
         })
     };
     match Capture::start(Source::System, sink) {
@@ -139,8 +163,9 @@ fn listen(app: &AppHandle) -> Option<Capture> {
 fn stop(app: &AppHandle, capture: &mut Option<Capture>) {
     if let Some(mut c) = capture.take() {
         c.stop();
-        let _ =
-            app.emit_to(island::WINDOW_LABEL, EVENT, BeatEvent { bpm: 0.0, phase: 0.0, strength: 0.0, beat: false });
+        let gone = BeatEvent { bpm: 0.0, phase: 0.0, strength: 0.0, beat: false };
+        let _ = app.emit_to(island::WINDOW_LABEL, EVENT, gone);
+        let _ = app.emit_to(crate::desktop::LABEL, EVENT, gone);
     }
 }
 

@@ -305,6 +305,14 @@ class AppState {
     return state === "idle" && this.userAway ? "sleeping" : state;
   }
 
+  /** LuLu hears a beat in what the computer plays (island.ts, from src-tauri/src/dance/). */
+  followsBeat = false;
+
+  /** Music is on: Spotify's pill plays, or a beat is heard in what the computer plays. */
+  get musicPlaying(): boolean {
+    return this.spotifyPlaying || this.followsBeat;
+  }
+
   /** Spotify plays on a declared pill: LuLu dances (Linux; never on Windows yet). */
   get spotifyPlaying(): boolean {
     return musicPlaying(Spotify.state, sanitizeDeclared(this.settings, this.os).activeIntegrations);

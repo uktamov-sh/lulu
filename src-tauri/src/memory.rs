@@ -120,6 +120,7 @@ pub async fn fold_in(settings: Settings, plain: Vec<Value>) {
             if text.is_empty() {
                 return;
             }
+            crate::log::line(format!("memory: note updated, {} characters", text.chars().count()));
             let dir = crate::settings::config_dir();
             if let Err(err) = crate::platform::ensure_private_dir(&dir).and_then(|_| std::fs::write(path(), text)) {
                 crate::log::line(format!("memory: could not save: {err}"));

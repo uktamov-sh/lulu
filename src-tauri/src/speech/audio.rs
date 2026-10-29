@@ -191,6 +191,12 @@ pub struct InputDevice {
     pub default: bool,
 }
 
+/// The default speakers' name: what loopback listens to, for noticing a switch
+/// to other speakers or to headphones (dance/mod.rs).
+pub fn default_output_name() -> Option<String> {
+    cpal::default_host().default_output_device().map(|d| device_name(&d))
+}
+
 fn device_name(d: &cpal::Device) -> String {
     d.description().map(|desc| desc.name().to_string()).unwrap_or_default()
 }

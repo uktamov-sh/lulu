@@ -2,6 +2,46 @@
   "about": "What's new, shown once in the island after LuLu updates itself (src/whats-new/). Every Windows and Linux release adds its entry here, in the 12 languages: 1 to 4 items, a short title and one line each, an icon from scripts/test-whats-new.py. python3 scripts/test-whats-new.py checks it.",
   "releases": [
     {
+      "version": "0.2.3",
+      "items": [
+        {
+          "icon": "bolt",
+          "title": {
+            "en": "Everyone dances",
+            "zh-Hans": "大家一起跳舞",
+            "hi": "सब मिलकर नाचते हैं",
+            "es": "Todas bailan",
+            "ar": "الجميع يرقص",
+            "fr": "Toutes dansent",
+            "bn": "সবাই নাচে",
+            "pt-BR": "Todas dançam",
+            "ru": "Танцуют все",
+            "id": "Semua menari",
+            "de": "Alle tanzen",
+            "tr": "Hepsi dans eder",
+            "uz": "Hammasi raqsga tushadi",
+            "uz-yangi": "Hammasi raqsga tuşadi"
+          },
+          "detail": {
+            "en": "The small LuLus and the one on your desktop dance with her, and she follows headphones you plug in.",
+            "zh-Hans": "小 LuLu 和桌面上的 LuLu 会和她一起跳舞，插上耳机后她也能跟上。",
+            "hi": "छोटी LuLu और डेस्कटॉप वाली LuLu उसके साथ नाचती हैं, और हेडफ़ोन लगाने पर भी वह साथ देती है।",
+            "es": "Las LuLu pequeñas y la del escritorio bailan con ella, y sigue a los auriculares que conectas.",
+            "ar": "تشاركها اللولوات الصغيرة وتلك التي على سطح المكتب الرقص، وتتبع سماعات الرأس التي توصلها.",
+            "fr": "Les petites LuLu et celle du bureau dansent avec elle, et elle suit les écouteurs que tu branches.",
+            "bn": "ছোট LuLu আর ডেস্কটপের LuLu তার সঙ্গে নাচে, আর হেডফোন লাগালেও সে সঙ্গে থাকে।",
+            "pt-BR": "As LuLus pequenas e a da área de trabalho dançam com ela, e ela acompanha os fones que você conecta.",
+            "ru": "Маленькие LuLu и та, что на рабочем столе, танцуют вместе с ней, а она подхватывает наушники, которые вы подключили.",
+            "id": "LuLu kecil dan LuLu di desktop ikut menari bersamanya, dan ia mengikuti headphone yang kamu colok.",
+            "de": "Die kleinen LuLus und die auf dem Desktop tanzen mit ihr, und sie folgt den Kopfhörern, die du ansteckst.",
+            "tr": "Küçük LuLu’lar ve masaüstündeki LuLu onunla dans eder; taktığın kulaklığı da takip eder.",
+            "uz": "Kichik LuLular va ish stolidagi LuLu u bilan birga raqsga tushadi, ulagan quloqchinlaringizni ham kuzatadi.",
+            "uz-yangi": "Kiçik LuLular va iş stolidagi LuLu u bilan birga raqsga tuşadi, ulagan quloqçinlaringizni ham kuzatadi."
+          }
+        }
+      ]
+    },
+    {
       "version": "0.2.1",
       "items": [
         {

@@ -10,7 +10,7 @@
 import { Bridge, emitToWindow, onEvent, type DesktopMode } from "../core/bridge";
 import type { BotEmoteName } from "../core/layout";
 import { Sound } from "../core/sound";
-import { BotEngine } from "../mochi/engine";
+import { BotEngine, type BeatInfo } from "../mochi/engine";
 import {
   DESKTOP_EVENTS, DOUBLE_CLICK_MS, DRAG_THRESHOLD, PANEL_SIZE, STROLL_MAX_S, STROLL_MIN_S, agentActive, gaze,
   isOverBody, layerDragTopLeft, lookOrigin, mayStroll, pointerDistance, shouldSleep, windowDragTopLeft,
@@ -89,6 +89,8 @@ class DesktopLuLu {
       this.engine.triggerEmote(e.emote, e.duration);
       this.schedule();
     });
+    // The computer's beat (src-tauri/src/dance/): he dances in step with the island's LuLu.
+    await onEvent<BeatInfo>("dance-beat", (e) => this.engine.hearBeat(e));
     await onEvent<Point>(DESKTOP_EVENTS.cursor, (p) => this.notePointer(p));
     await onEvent<boolean>(DESKTOP_EVENTS.visible, (on) => this.setVisible(on));
     await onEvent<string>(DESKTOP_EVENTS.flight, (kind) => {

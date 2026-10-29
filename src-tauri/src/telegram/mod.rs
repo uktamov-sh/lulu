@@ -350,7 +350,15 @@ pub fn notify(app: &AppHandle, text: &str) {
         return;
     }
     let Some(owner) = tg.book.lock().unwrap().owner else { return };
-    send_later(app, "sendMessage", json!({ "chat_id": owner, "text": text }));
+    let Some(token) = secrets::get_internal(TOKEN_KEY) else { return };
+    let client = tg.client.clone();
+    let body = json!({ "chat_id": owner, "text": text });
+    tauri::async_runtime::spawn(async move {
+        match call(&client, &token, "sendMessage", body).await {
+            Ok(_) => log::line("telegram: reminder sent"),
+            Err(err) => log::line(format!("telegram: reminder failed: {err}")),
+        }
+    });
 }
 
 /// The island has the request on screen: the phone gets its card. Never waits.

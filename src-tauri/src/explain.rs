@@ -94,6 +94,7 @@ pub async fn explain_request(
     if !settings.explain_requests {
         return Err("off".into());
     }
+    crate::log::line(format!("explain: asking {} about a {tool} request", settings.chat_provider));
     let provider = if settings.chat_provider.is_empty() { chat::ANTHROPIC.to_string() } else { settings.chat_provider.clone() };
     let model = chat::model_for(&settings, &provider);
     let reply = chat::send_for_phone(
@@ -104,12 +105,19 @@ pub async fn explain_request(
         prompt(&tool, &detail, &cwd, &language, &fresh_key()),
         |_| {},
     )
-    .await?;
+    .await
+    .map_err(|err| {
+        crate::log::line(format!("explain: failed: {}", err.chars().take(120).collect::<String>()));
+        err
+    })?;
     let line = tidy(&reply.text);
     if line.is_empty() {
+        crate::log::line("explain: the AI answered nothing");
         return Err("empty".into());
     }
-    Ok(guard(line, &detail))
+    let line = guard(line, &detail);
+    crate::log::line(format!("explain: answered, starts with {}", line.chars().next().unwrap_or(' ')));
+    Ok(line)
 }
 
 #[cfg(test)]
