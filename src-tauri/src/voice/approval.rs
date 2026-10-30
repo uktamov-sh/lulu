@@ -91,7 +91,7 @@ const SAFE_FLAGS: &[&str] = &["--stat", "--oneline", "--short", "--no-color", "-
 /// A plain local path on a drive (`C:\dir\file`, `C:/dir/file`): not a network
 /// path, not a device or `\\?\` path, no alternate stream (`file:stream`), no
 /// `..` and none of the characters Windows reserves.
-fn local_drive_path(path: &str) -> bool {
+pub(crate) fn local_drive_path(path: &str) -> bool {
     let b = path.as_bytes();
     if b.len() < 3 || !b[0].is_ascii_alphabetic() || b[1] != b':' || !(b[2] == b'\\' || b[2] == b'/') {
         return false;

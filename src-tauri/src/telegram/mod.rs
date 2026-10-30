@@ -17,6 +17,7 @@
 // only means no card arrives.
 
 mod core;
+mod run;
 
 use std::path::PathBuf;
 use std::sync::Mutex;
@@ -32,6 +33,7 @@ use crate::{island, log, pipe, recap, secrets};
 
 pub use self::core::{Draft, Ending};
 use self::core::{Book, Command, Press, Start};
+use self::run::Project;
 
 const TOKEN_KEY: &str = "telegram-bot-token";
 const OWNER_KEY: &str = "telegram-owner";
@@ -51,6 +53,9 @@ struct Prefs {
     hide_command: bool,
     /// The bot's @name, from getMe: shown in Settings and used for its t.me link.
     bot: String,
+    /// `/run` may start Claude Code in the projects below (run.rs).
+    run: bool,
+    projects: Vec<Project>,
 }
 
 fn prefs_path() -> PathBuf {
@@ -62,6 +67,7 @@ fn load_prefs() -> Prefs {
     if !is_bot_name(&p.bot) {
         p.bot.clear();
     }
+    p.projects = self::run::trusted(std::mem::take(&mut p.projects));
     p
 }
 
@@ -139,6 +145,8 @@ pub struct Status {
     paired: bool,
     /// The code to send the bot, while it may be used.
     code: Option<String>,
+    run: bool,
+    projects: Vec<Project>,
 }
 
 fn status(tg: &Telegram) -> Status {
@@ -151,6 +159,8 @@ fn status(tg: &Telegram) -> Status {
         bot: prefs.bot,
         paired: book.owner.is_some(),
         code: book.pairing_code(now_ms()).map(str::to_string),
+        run: prefs.run,
+        projects: prefs.projects,
     }
 }
 
@@ -339,14 +349,29 @@ const MAX_REPLY: usize = 3800;
 fn run_command(app: &AppHandle, chat: i64, command: Command) {
     let open = crate::tasks::open_tasks(app);
     let text = match command {
-        Command::Status => format!(
-            "🐼 {}
+        Command::Status => {
+            let mut out = format!(
+                "🐼 {}
 {}
 {}",
-            t("LuLu is running."),
-            tf("Waiting for permission: {count}", &[("count", &pipe::waiting_count().to_string())]),
-            tf("Open tasks: {count}", &[("count", &open.len().to_string())]),
-        ),
+                t("LuLu is running."),
+                tf("Waiting for permission: {count}", &[("count", &pipe::waiting_count().to_string())]),
+                tf("Open tasks: {count}", &[("count", &open.len().to_string())]),
+            );
+            if let Some(project) = self::run::running() {
+                out.push_str(&format!("
+{}", tf("Running: {project}", &[("project", &project)])));
+            }
+            out
+        }
+        Command::Projects => match run_enabled_projects(app) {
+            Ok(projects) => projects_line(&projects),
+            Err(why) => why,
+        },
+        Command::Run { project, task } => run_reply(app, &project, &task),
+        // The thread watching the task ends it and says so.
+        Command::Stop if self::run::stop() => return,
+        Command::Stop => t("Nothing is running."),
         Command::Tasks if open.is_empty() => t("No open tasks."),
         Command::Tasks => {
             let mut out = t("Open tasks:");
@@ -367,6 +392,47 @@ fn run_command(app: &AppHandle, chat: i64, command: Command) {
         },
     };
     send_later(app, "sendMessage", json!({ "chat_id": chat, "text": text }));
+}
+
+/// The projects `/run` may use, or why there is none to use.
+fn run_enabled_projects(app: &AppHandle) -> Result<Vec<Project>, String> {
+    let Some(tg) = app.try_state::<Telegram>() else { return Err(String::new()) };
+    let prefs = tg.prefs.lock().unwrap();
+    if !prefs.run {
+        return Err(t("Running tasks from Telegram is off. Turn it on in LuLu's settings."));
+    }
+    if prefs.projects.is_empty() {
+        return Err(t("No projects are allowed yet. Add one in LuLu's settings."));
+    }
+    Ok(prefs.projects.clone())
+}
+
+fn projects_line(projects: &[Project]) -> String {
+    let names: Vec<&str> = projects.iter().map(|p| p.name.as_str()).collect();
+    tf("Projects: {names}", &[("names", &names.join(", "))])
+}
+
+/// `/run project task`: starts Claude Code in a listed project (run.rs).
+fn run_reply(app: &AppHandle, project: &str, task: &str) -> String {
+    let projects = match run_enabled_projects(app) {
+        Ok(projects) => projects,
+        Err(why) => return why,
+    };
+    if project.is_empty() || task.is_empty() {
+        return format!("{}
+{}", t("Write the project and the task: /run shop fix the footer"), projects_line(&projects));
+    }
+    let Some(found) = projects.iter().find(|p| p.name == project.to_ascii_lowercase()) else {
+        return format!("{}
+{}", t("Unknown project."), projects_line(&projects));
+    };
+    if task.chars().count() > self::run::MAX_TASK {
+        return t("The task is too long.");
+    }
+    match self::run::start(app, found, task) {
+        Ok(()) => tf("Started in {project}. Permission requests will come here.", &[("project", &found.name)]),
+        Err(why) => why,
+    }
 }
 
 // ── Called by pipe.rs ─────────────────────────────────────────────────────────
@@ -396,7 +462,8 @@ pub fn describe(payload: &Value) -> Option<(String, String, String, bool)> {
     Some((draft.tool, draft.target.unwrap_or_default(), cwd, draft.truncated))
 }
 
-/// A plain message to the paired chat (a task's reminder, tasks.rs), when
+/// A plain message to the paired chat (a task's reminder, tasks.rs; the end of a
+/// `/run` task, run.rs), when
 /// Telegram is on and paired; otherwise nothing. Never waits.
 pub fn notify(app: &AppHandle, text: &str) {
     let Some(tg) = app.try_state::<Telegram>() else { return };
@@ -409,8 +476,8 @@ pub fn notify(app: &AppHandle, text: &str) {
     let body = json!({ "chat_id": owner, "text": text });
     tauri::async_runtime::spawn(async move {
         match call(&client, &token, "sendMessage", body).await {
-            Ok(_) => log::line("telegram: reminder sent"),
-            Err(err) => log::line(format!("telegram: reminder failed: {err}")),
+            Ok(_) => log::line("telegram: message sent"),
+            Err(err) => log::line(format!("telegram: message failed: {err}")),
         }
     });
 }
@@ -492,6 +559,43 @@ pub fn telegram_set_options(window: WebviewWindow, app: AppHandle, tg: State<Tel
     }
     restart_polling(&app);
     changed(&app);
+    Ok(status(&tg))
+}
+
+/// `/run` on or off.
+#[tauri::command]
+pub fn telegram_set_run(window: WebviewWindow, tg: State<Telegram>, enabled: bool) -> Result<Status, String> {
+    only_settings(&window)?;
+    {
+        let mut prefs = tg.prefs.lock().unwrap();
+        prefs.run = enabled;
+        save_prefs(&prefs);
+    }
+    Ok(status(&tg))
+}
+
+/// Puts a project (a name and a folder) in the list `/run` may use.
+#[tauri::command]
+pub fn telegram_add_project(window: WebviewWindow, tg: State<Telegram>, name: String, path: String) -> Result<Status, String> {
+    only_settings(&window)?;
+    {
+        let mut prefs = tg.prefs.lock().unwrap();
+        let project = self::run::check_project(&name, &path, &prefs.projects)?;
+        log::line(format!("telegram: project {} allowed for /run", project.name));
+        prefs.projects.push(project);
+        save_prefs(&prefs);
+    }
+    Ok(status(&tg))
+}
+
+#[tauri::command]
+pub fn telegram_remove_project(window: WebviewWindow, tg: State<Telegram>, name: String) -> Result<Status, String> {
+    only_settings(&window)?;
+    {
+        let mut prefs = tg.prefs.lock().unwrap();
+        prefs.projects.retain(|p| p.name != name);
+        save_prefs(&prefs);
+    }
     Ok(status(&tg))
 }
 
@@ -620,7 +724,7 @@ mod tests {
             assert!(body.contains("window: WebviewWindow") && body.contains("only_settings(&window)?"), "{name} does not check the calling window");
             seen += 1;
         }
-        assert_eq!(seen, 6);
+        assert_eq!(seen, 9);
         // Events reach every webview's global listener: none may carry the status (its pairing code).
         for line in source.lines().filter(|l| l.contains(".emit")) {
             assert!(!line.contains("status("), "an event carries the status: {line}");
@@ -639,8 +743,8 @@ mod tests {
     fn the_switches_default_to_off_and_hold_no_secret() {
         let p: Prefs = serde_json::from_str("{}").unwrap();
         assert_eq!(p, Prefs::default());
-        assert!(!p.enabled && !p.hide_command);
-        let json = serde_json::to_string(&Prefs { enabled: true, hide_command: true, bot: "lulu_bot".into() }).unwrap();
-        assert_eq!(json, r#"{"enabled":true,"hideCommand":true,"bot":"lulu_bot"}"#);
+        assert!(!p.enabled && !p.hide_command && !p.run && p.projects.is_empty(), "/run is off until Settings turns it on");
+        let json = serde_json::to_string(&Prefs { enabled: true, hide_command: true, bot: "lulu_bot".into(), ..Prefs::default() }).unwrap();
+        assert_eq!(json, r#"{"enabled":true,"hideCommand":true,"bot":"lulu_bot","run":false,"projects":[]}"#);
     }
 }

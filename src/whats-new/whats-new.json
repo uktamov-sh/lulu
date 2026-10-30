@@ -2,6 +2,46 @@
   "about": "What's new, shown once in the island after LuLu updates itself (src/whats-new/). Every Windows and Linux release adds its entry here, in the 12 languages: 1 to 4 items, a short title and one line each, an icon from scripts/test-whats-new.py. python3 scripts/test-whats-new.py checks it.",
   "releases": [
     {
+      "version": "0.5.0",
+      "items": [
+        {
+          "icon": "terminal",
+          "title": {
+            "en": "Tasks for Claude Code from Telegram",
+            "zh-Hans": "从 Telegram 给 Claude Code 派任务",
+            "hi": "Telegram से Claude Code को कार्य",
+            "es": "Tareas para Claude Code desde Telegram",
+            "ar": "مهام لـ Claude Code من Telegram",
+            "fr": "Des tâches pour Claude Code depuis Telegram",
+            "bn": "Telegram থেকে Claude Code-কে কাজ",
+            "pt-BR": "Tarefas para o Claude Code pelo Telegram",
+            "ru": "Задачи для Claude Code из Telegram",
+            "id": "Tugas untuk Claude Code dari Telegram",
+            "de": "Aufgaben für Claude Code per Telegram",
+            "tr": "Telegram’dan Claude Code’a görevler",
+            "uz": "Telegramdan Claude Code ga vazifalar",
+            "uz-yangi": "Telegramdan Claude Code ga vazifalar"
+          },
+          "detail": {
+            "en": "/run project task, only for projects you list; every permission still asks you.",
+            "zh-Hans": "/run 项目 任务，只限你列出的项目；每项权限仍会询问你。",
+            "hi": "/run प्रोजेक्ट कार्य, केवल आपके सूचीबद्ध प्रोजेक्ट; हर अनुमति फिर भी आपसे पूछी जाती है।",
+            "es": "/run proyecto tarea, solo en los proyectos que listes; cada permiso te lo sigue pidiendo.",
+            "ar": "‏/run مشروع مهمة، فقط للمشاريع التي تدرجها؛ وكل إذن يُطلب منك كالمعتاد.",
+            "fr": "/run projet tâche, seulement pour les projets listés ; chaque autorisation t’est toujours demandée.",
+            "bn": "/run প্রজেক্ট কাজ, শুধু আপনার তালিকার প্রজেক্টে; প্রতিটি অনুমতি এখনও আপনাকে জিজ্ঞেস করা হয়।",
+            "pt-BR": "/run projeto tarefa, só nos projetos que você listar; cada permissão ainda pergunta a você.",
+            "ru": "/run проект задача — только для проектов из вашего списка; каждое разрешение по-прежнему спрашивается у вас.",
+            "id": "/run proyek tugas, hanya untuk proyek yang kamu daftarkan; setiap izin tetap ditanyakan.",
+            "de": "/run Projekt Aufgabe, nur für Projekte, die du listest; jede Erlaubnis fragt weiterhin dich.",
+            "tr": "/run proje görev, yalnızca listelediğin projeler için; her izin yine sana sorulur.",
+            "uz": "/run loyiha vazifa — faqat siz kiritgan loyihalar uchun; har bir ruxsat baribir sizdan soʻraladi.",
+            "uz-yangi": "/run loyiha vazifa — faqat siz kiritgan loyihalar uçun; har bir ruxsat baribir sizdan söraladi."
+          }
+        }
+      ]
+    },
+    {
       "version": "0.4.0",
       "items": [
         {

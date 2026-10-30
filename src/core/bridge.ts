@@ -482,6 +482,10 @@ export const Bridge = {
   telegramStatus: () => call<TelegramStatus>("telegram_status"),
   telegramSetOptions: (enabled: boolean, hideCommand: boolean) =>
     call<TelegramStatus>("telegram_set_options", { enabled, hideCommand }),
+  /** `/run`: tasks for Claude Code from the phone, in the listed projects only (src-tauri/src/telegram/run.rs). */
+  telegramSetRun: (enabled: boolean) => call<TelegramStatus>("telegram_set_run", { enabled }),
+  telegramAddProject: (name: string, path: string) => callOrThrow<TelegramStatus>("telegram_add_project", { name, path }),
+  telegramRemoveProject: (name: string) => call<TelegramStatus>("telegram_remove_project", { name }),
   /** Checks the token with Telegram, keeps it in the credential store and shows a pairing code. */
   telegramConnect: (token: string) => callOrThrow<TelegramStatus>("telegram_connect", { token }),
   telegramNewCode: () => callOrThrow<TelegramStatus>("telegram_new_code"),
@@ -643,6 +647,10 @@ export interface TelegramStatus {
   paired: boolean;
   /** The code to send the bot, while it may be used. */
   code: string | null;
+  /** `/run` is on. */
+  run: boolean;
+  /** The projects `/run` may start Claude Code in: a short name and the folder. */
+  projects: { name: string; path: string }[];
 }
 
 export type BridgeEvent =

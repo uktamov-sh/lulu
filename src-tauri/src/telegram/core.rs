@@ -172,6 +172,10 @@ pub enum Command {
     Tasks,
     /// A plain to-do; empty when nothing followed the command.
     Add(String),
+    Projects,
+    /// A task for Claude Code in a project: both may be empty when missing.
+    Run { project: String, task: String },
+    Stop,
 }
 
 /// What a button press does.
@@ -276,6 +280,13 @@ impl Book {
             "/status" => Some(Command::Status),
             "/tasks" => Some(Command::Tasks),
             "/add" => Some(Command::Add(rest.trim().to_string())),
+            "/projects" => Some(Command::Projects),
+            "/stop" => Some(Command::Stop),
+            "/run" => {
+                let rest = rest.trim();
+                let (project, task) = rest.split_once(char::is_whitespace).unwrap_or((rest, ""));
+                Some(Command::Run { project: project.to_string(), task: task.trim().to_string() })
+            }
             _ => None,
         }
     }
@@ -490,8 +501,18 @@ mod tests {
         assert_eq!(ask(OWNER, OWNER, true, "/add"), Some(Command::Add(String::new())));
         assert_eq!(ask(OWNER, OWNER, true, "/add
 second line"), Some(Command::Add("second line".into())));
+        assert_eq!(ask(OWNER, OWNER, true, "/projects"), Some(Command::Projects));
+        assert_eq!(ask(OWNER, OWNER, true, "/stop@lulu_bot"), Some(Command::Stop));
+        let run = |project: &str, task: &str| Some(Command::Run { project: project.into(), task: task.into() });
+        assert_eq!(ask(OWNER, OWNER, true, "/run shop fix the footer
+and the logo "), run("shop", "fix the footer
+and the logo"));
+        assert_eq!(ask(OWNER, OWNER, true, "/run@lulu_bot Shop run the tests"), run("Shop", "run the tests"));
+        assert_eq!(ask(OWNER, OWNER, true, "/run shop"), run("shop", ""));
+        assert_eq!(ask(OWNER, OWNER, true, "/run"), run("", ""));
+        assert_eq!(ask(OWNER, OWNER, true, "/run --dangerously-skip-permissions x"), run("--dangerously-skip-permissions", "x"));
         // Not commands.
-        for text in ["", "status", "/statusx", "/addx milk", "hello /status", "/start ABCD2345", "/run npm test"] {
+        for text in ["", "status", "/statusx", "/addx milk", "hello /status", "/start ABCD2345", "/runx shop a", "run shop a", "/stopp"] {
             assert_eq!(ask(OWNER, OWNER, true, text), None, "{text:?}");
         }
         // Nobody else, and nowhere else: a stranger, a group the owner is in, a forged chat.

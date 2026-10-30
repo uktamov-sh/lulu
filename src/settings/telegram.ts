@@ -26,6 +26,34 @@ export function telegramSection(toggle: Toggle, keyStore: string): HTMLElement {
     style: "flex:1 1 auto;min-width:0",
   }) as HTMLInputElement;
   const connectBtn = h("button", { class: "primary", text: t("Connect") }) as HTMLButtonElement;
+  const runSwitch = toggle(false, (on) => void Bridge.telegramSetRun(on).then(apply));
+  const projectList = h("div", { style: "display:flex;flex-direction:column;gap:6px" });
+  const nameInput = h("input", {
+    placeholder: t("Short name"), autocomplete: "off", spellcheck: "false", maxlength: "24", style: "flex:0 0 28%;min-width:0",
+  }) as HTMLInputElement;
+  const folderInput = h("input", {
+    placeholder: t("Folder path"), autocomplete: "off", spellcheck: "false", style: "flex:1 1 auto;min-width:0",
+  }) as HTMLInputElement;
+  const projectError = h("div", { class: "notice err", style: "display:none" });
+  const addProject = () => {
+    const name = nameInput.value.trim();
+    const path = folderInput.value.trim();
+    if (!name || !path) return;
+    projectError.style.display = "none";
+    Bridge.telegramAddProject(name, path).then(
+      (status) => {
+        nameInput.value = "";
+        folderInput.value = "";
+        apply(status);
+      },
+      (err) => {
+        projectError.textContent = String(err).replace(/^Error:\s*/, "");
+        projectError.style.display = "";
+      },
+    );
+  };
+  nameInput.addEventListener("keydown", (e) => e.key === "Enter" && addProject());
+  folderInput.addEventListener("keydown", (e) => e.key === "Enter" && addProject());
 
   const switchState = (el: HTMLElement, on: boolean) => {
     el.classList.toggle("on", on);
@@ -77,6 +105,13 @@ export function telegramSection(toggle: Toggle, keyStore: string): HTMLElement {
     if (!v) return;
     switchState(enableSwitch, v.enabled);
     switchState(hideSwitch, v.hideCommand);
+    switchState(runSwitch, v.run);
+    projectList.replaceChildren(...v.projects.map((p) => h("div", { class: "row", style: "gap:8px" },
+      h("code", { style: "font-size:12.5px", text: p.name }),
+      h("span", { style: "font-size:12px;opacity:.7;overflow:hidden;text-overflow:ellipsis;white-space:nowrap", title: p.path, text: p.path }),
+      h("span", { class: "spacer" }),
+      h("button", { class: "danger", text: t("Remove"), onclick: () => void Bridge.telegramRemoveProject(p.name).then(apply) }),
+    )));
     body.style.display = v.enabled ? "" : "none";
     const bot = v.bot ? `@${v.bot}` : t("your bot");
     const parts: HTMLElement[] = [];
@@ -122,6 +157,11 @@ export function telegramSection(toggle: Toggle, keyStore: string): HTMLElement {
   body.append(
     steps,
     h("div", { class: "row" }, h("label", { text: t("Hide the command: show only the tool and the project") }), hideSwitch),
+    h("div", { class: "row" }, h("label", { text: t("Run tasks from Telegram") }), runSwitch),
+    h("div", { class: "hint", text: t("Send « /run project task » to your bot and LuLu starts Claude Code in that project's folder. Only the projects below, one task at a time. Every permission it needs still asks you, on the island and in Telegram; what it cannot get is refused. Claude Code must be signed in on this computer. Anyone who gets into your Telegram can give it tasks, so allow only projects you would let them touch.") }),
+    projectList,
+    h("div", { class: "row", style: "gap:8px" }, nameInput, folderInput, h("button", { class: "primary", text: t("Add"), onclick: addProject })),
+    projectError,
   );
 
   const section = h(
