@@ -2,6 +2,81 @@
   "about": "What's new, shown once in the island after LuLu updates itself (src/whats-new/). Every Windows and Linux release adds its entry here, in the 12 languages: 1 to 4 items, a short title and one line each, an icon from scripts/test-whats-new.py. python3 scripts/test-whats-new.py checks it.",
   "releases": [
     {
+      "version": "0.4.0",
+      "items": [
+        {
+          "icon": "checklist",
+          "title": {
+            "en": "“Always here” button",
+            "zh-Hans": "“此处始终允许”按钮",
+            "hi": "“यहाँ हमेशा” बटन",
+            "es": "Botón «Siempre aquí»",
+            "ar": "زر «دائمًا هنا»",
+            "fr": "Bouton « Toujours ici »",
+            "bn": "“এখানে সবসময়” বোতাম",
+            "pt-BR": "Botão “Sempre aqui”",
+            "ru": "Кнопка «Всегда здесь»",
+            "id": "Tombol “Selalu di sini”",
+            "de": "Schaltfläche „Immer hier“",
+            "tr": "“Burada her zaman” düğmesi",
+            "uz": "«Doim shu yerda» tugmasi",
+            "uz-yangi": "«Doim şu yerda» tugmasi"
+          },
+          "detail": {
+            "en": "For a build or test command, Claude Code remembers your Allow for this project and stops asking.",
+            "zh-Hans": "对构建或测试命令，Claude Code 会为此项目记住你的允许，不再询问。",
+            "hi": "बिल्ड या टेस्ट कमांड के लिए Claude Code इस प्रोजेक्ट में आपकी अनुमति याद रखता है और दोबारा नहीं पूछता।",
+            "es": "Para un comando de compilación o prueba, Claude Code recuerda tu permiso en este proyecto y deja de preguntar.",
+            "ar": "لأمر بناء أو اختبار، يتذكّر Claude Code سماحك في هذا المشروع ويتوقف عن السؤال.",
+            "fr": "Pour une commande de build ou de test, Claude Code retient ton autorisation pour ce projet et ne redemande plus.",
+            "bn": "বিল্ড বা টেস্ট কমান্ডের জন্য Claude Code এই প্রজেক্টে আপনার অনুমতি মনে রাখে, আর জিজ্ঞেস করে না।",
+            "pt-BR": "Para um comando de build ou teste, o Claude Code lembra da sua permissão neste projeto e para de perguntar.",
+            "ru": "Для команды сборки или тестов Claude Code запомнит ваше «Разрешить» в этом проекте и перестанет спрашивать.",
+            "id": "Untuk perintah build atau tes, Claude Code mengingat izinmu di proyek ini dan berhenti bertanya.",
+            "de": "Bei einem Build- oder Testbefehl merkt sich Claude Code deine Erlaubnis für dieses Projekt und fragt nicht mehr.",
+            "tr": "Derleme veya test komutu için Claude Code bu projede iznini hatırlar ve sormayı bırakır.",
+            "uz": "Yigʻish yoki test buyrugʻi uchun Claude Code shu loyihada ruxsatingizni eslab qoladi va soʻramaydi.",
+            "uz-yangi": "Yiğiş yoki test buyruği uçun Claude Code şu loyihada ruxsatingizni eslab qoladi va söramaydi."
+          }
+        },
+        {
+          "icon": "phone",
+          "title": {
+            "en": "Commands in Telegram",
+            "zh-Hans": "Telegram 命令",
+            "hi": "Telegram में कमांड",
+            "es": "Comandos en Telegram",
+            "ar": "أوامر في Telegram",
+            "fr": "Commandes dans Telegram",
+            "bn": "Telegram-এ কমান্ড",
+            "pt-BR": "Comandos no Telegram",
+            "ru": "Команды в Telegram",
+            "id": "Perintah di Telegram",
+            "de": "Befehle in Telegram",
+            "tr": "Telegram’da komutlar",
+            "uz": "Telegramdagi buyruqlar",
+            "uz-yangi": "Telegramdagi buyruqlar"
+          },
+          "detail": {
+            "en": "/status, /tasks and /add task — right from your phone.",
+            "zh-Hans": "/status、/tasks 和 /add 任务——直接在手机上使用。",
+            "hi": "/status, /tasks और /add कार्य — सीधे फ़ोन से।",
+            "es": "/status, /tasks y /add tarea, desde el móvil.",
+            "ar": "‏/status و/tasks و/add مهمة — من هاتفك مباشرة.",
+            "fr": "/status, /tasks et /add tâche, depuis ton téléphone.",
+            "bn": "/status, /tasks এবং /add কাজ — সরাসরি ফোন থেকে।",
+            "pt-BR": "/status, /tasks e /add tarefa, direto do celular.",
+            "ru": "/status, /tasks и /add задача — прямо с телефона.",
+            "id": "/status, /tasks, dan /add tugas, langsung dari ponsel.",
+            "de": "/status, /tasks und /add Aufgabe, direkt vom Handy.",
+            "tr": "/status, /tasks ve /add görev, doğrudan telefondan.",
+            "uz": "/status, /tasks va /add vazifa — bevosita telefondan.",
+            "uz-yangi": "/status, /tasks va /add vazifa — bevosita telefondan."
+          }
+        }
+      ]
+    },
+    {
       "version": "0.3.4",
       "items": [
         {

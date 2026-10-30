@@ -289,6 +289,11 @@ pub fn something_waits() -> bool {
     !WAITING.lock().unwrap().is_empty()
 }
 
+/// How many cards are up on the island waiting for an answer (Telegram `/status`).
+pub fn waiting_count() -> usize {
+    WAITING.lock().unwrap().len()
+}
+
 /// What answering by voice came to.
 #[derive(Debug, PartialEq, Eq)]
 pub enum VoiceResult {
@@ -368,7 +373,7 @@ enum NoDecision {
 fn phone_ending(result: &Result<String, NoDecision>) -> Option<crate::telegram::Ending> {
     use crate::telegram::Ending;
     Some(match result {
-        Ok(d) if d == "allow" => Ending::ComputerAllowed,
+        Ok(d) if d == "allow" || d == "always" => Ending::ComputerAllowed,
         Ok(d) if d == "deny" => Ending::ComputerDenied,
         Ok(_) | Err(NoDecision::Released) => Ending::Computer,
         Err(NoDecision::TimedOut) => Ending::TimedOut,
@@ -461,8 +466,11 @@ pub fn decline(app: &AppHandle, request_id: &str) {
 /// bare word: turning it into Claude Code's JSON is lulu-hook's job. False when
 /// the request had already been answered or was over.
 pub fn answer(app: &AppHandle, request_id: &str, decision: &str) -> bool {
+    // "always" goes on to lulu-hook as it is: it asks Claude Code to keep the rule
+    // (reply::always), and only does so for a command the hook itself found plain.
     let word = match decision {
-        "allow" | "always" => "allow",
+        "allow" => "allow",
+        "always" => "always",
         _ => "deny",
     };
     log::line(format!("decision id={request_id} {word}"));

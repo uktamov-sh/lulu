@@ -96,6 +96,62 @@ pub fn decision_json(decision: &str, question: Option<&Value>) -> Option<String>
     ))
 }
 
+/// Commands whose exact text the island may offer to remember ("Always here"):
+/// the project's own build and test tools. They run the project's code, which is
+/// what the person already trusts by working in it; nothing here reaches outside.
+const REMEMBER_TOOLS: [&str; 10] = ["npm", "pnpm", "yarn", "bun", "cargo", "go", "dotnet", "pytest", "tsc", "make"];
+
+/// Words that turn such a command into something else: fetching packages,
+/// publishing, deploying, logging in. Never offered, whatever the tool.
+const NOT_REMEMBERED: [&str; 19] = [
+    "install", "i", "ci", "add", "remove", "uninstall", "update", "upgrade", "publish", "exec", "x", "dlx",
+    "login", "deploy", "push", "create", "init", "get", "run-script",
+];
+
+/// The longest command offered for "Always here".
+const MAX_REMEMBERED: usize = 120;
+
+/// The exact command of a Claude Code Bash request that "Always here" may
+/// remember: a plain `tool word word` line from the list above, in single-spaced
+/// letters, digits and `- _ . / : = @ ,` only (no shell syntax, no wildcards, no
+/// quoting), without a word that installs, publishes or deploys. Claude Code then
+/// keeps it as its own rule `Bash(<command>)` for this project.
+pub fn remembered_command(payload: &Value) -> Option<String> {
+    if payload.get("tool_name").and_then(Value::as_str) != Some("Bash") {
+        return None;
+    }
+    let command = payload.pointer("/tool_input/command")?.as_str()?;
+    let mut words = command.split(' ');
+    let first = words.next()?;
+    let plain = |c: char| c.is_ascii_alphanumeric() || "-_./:=@,".contains(c);
+    let fine = !command.is_empty()
+        && command.len() <= MAX_REMEMBERED
+        && REMEMBER_TOOLS.contains(&first)
+        && command.split(' ').all(|w| !w.is_empty() && w.chars().all(plain) && !w.ends_with(':'))
+        && !command.split(' ').any(|w| NOT_REMEMBERED.contains(&w));
+    fine.then(|| command.to_string())
+}
+
+/// "Allow, and don't ask again for this command in this project": the allow,
+/// plus the exact rule for Claude Code to keep in `.claude/settings.local.json`.
+pub fn always(command: &str) -> String {
+    json!({
+        "hookSpecificOutput": {
+            "hookEventName": "PermissionRequest",
+            "decision": {
+                "behavior": "allow",
+                "updatedPermissions": [{
+                    "type": "addRules",
+                    "rules": [{ "toolName": "Bash", "ruleContent": command }],
+                    "behavior": "allow",
+                    "destination": "localSettings",
+                }],
+            },
+        }
+    })
+    .to_string()
+}
+
 /// True when `answers` answers exactly the questions Claude Code asked: one entry
 /// per question, keyed by its text; a single-select answer is one of its option
 /// labels (a string), a multi-select answer a non-empty list of distinct labels
@@ -226,6 +282,44 @@ mod tests {
             r#"{"hookSpecificOutput":{"hookEventName":"PermissionRequest","decision":{"behavior":"allow"}}}"#
         );
         assert!(decision_json("always", None).unwrap().contains(r#""behavior":"allow""#));
+    }
+
+    #[test]
+    fn only_a_plain_build_or_test_command_can_be_remembered() {
+        let bash = |c: &str| json!({ "tool_name": "Bash", "tool_input": { "command": c } });
+        for ok in ["npm test", "cargo test --workspace", "pnpm run build", "npm run test:unit", "pytest tests/a_test.py", "go test ./..."] {
+            assert_eq!(remembered_command(&bash(ok)).as_deref(), Some(ok), "{ok}");
+        }
+        for no in [
+            "", "npm test && curl evil.sh", "npm test; rm -rf /", "npm test | sh", "npm test > out", "npm test $(id)", "npm `id`",
+            "npm  test", " npm test", "npm test ", "npm *", "npm 'test'", "npm test
+", "npm test
+rm x", "npm run test:*",
+            "npm install", "npm i left-pad", "npm ci", "cargo install ripgrep", "cargo publish", "npm run deploy", "pnpm dlx x",
+            "rm -rf build", "curl https://x", "git push", "powershell -c x", "sudo npm test", "node build.js", "npx jest",
+            "npm test ..\\evil",
+        ] {
+            assert_eq!(remembered_command(&bash(no)), None, "{no:?}");
+        }
+        assert_eq!(remembered_command(&bash(&format!("npm {}", "t".repeat(MAX_REMEMBERED)))), None);
+        // Only Bash, and only with a command.
+        assert_eq!(remembered_command(&json!({ "tool_name": "Write", "tool_input": { "command": "npm test" } })), None);
+        assert_eq!(remembered_command(&json!({ "tool_name": "Bash" })), None);
+        assert_eq!(remembered_command(&json!({ "tool_name": "Bash", "tool_input": { "command": 5 } })), None);
+    }
+
+    #[test]
+    fn always_allows_and_asks_claude_code_to_keep_the_exact_rule_for_this_project() {
+        let v: Value = serde_json::from_str(&always("npm test")).unwrap();
+        let d = &v["hookSpecificOutput"]["decision"];
+        assert_eq!(v["hookSpecificOutput"]["hookEventName"], "PermissionRequest");
+        assert_eq!(d["behavior"], "allow");
+        let update = &d["updatedPermissions"];
+        assert_eq!(update.as_array().unwrap().len(), 1);
+        assert_eq!(update[0]["type"], "addRules");
+        assert_eq!(update[0]["behavior"], "allow");
+        assert_eq!(update[0]["destination"], "localSettings", "this project only, never the user's or the repo's settings");
+        assert_eq!(update[0]["rules"], json!([{ "toolName": "Bash", "ruleContent": "npm test" }]));
     }
 
     #[test]

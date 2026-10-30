@@ -52,6 +52,8 @@ export interface ApprovalInfo {
   questions?: AskedQuestion[];
   /** One plain line from the chat's AI about what this is (hooks.ts explain). */
   explanation?: string;
+  /** The exact command "Always here" would have Claude Code remember for this project (the relay checked it). */
+  remember?: string;
 }
 
 /** One question of an AskUserQuestion call. */

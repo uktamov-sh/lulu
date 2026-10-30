@@ -125,6 +125,10 @@ pub fn tasks_list(tasks: State<Tasks>) -> Vec<Task> {
 
 #[tauri::command]
 pub fn tasks_add(app: AppHandle, tasks: State<Tasks>, text: String, due: Option<i64>, daily: bool) -> Result<Vec<Task>, String> {
+    add(&app, &tasks, text, due, daily)
+}
+
+fn add(app: &AppHandle, tasks: &Tasks, text: String, due: Option<i64>, daily: bool) -> Result<Vec<Task>, String> {
     let text: String = text.trim().chars().take(MAX_TEXT).collect();
     if text.is_empty() {
         return Err("empty".into());
@@ -132,7 +136,21 @@ pub fn tasks_add(app: AppHandle, tasks: State<Tasks>, text: String, due: Option<
     let mut list = tasks.0.lock().unwrap();
     let id = list.iter().map(|t| t.id).max().unwrap_or(0) + 1;
     list.push(Task { id, text, due, daily: daily && due.is_some(), done: false });
-    Ok(changed(&app, &list))
+    Ok(changed(app, &list))
+}
+
+/// The to-dos not yet done, for the Telegram bot's `/tasks` and `/status`.
+pub fn open_tasks(app: &AppHandle) -> Vec<Task> {
+    let Some(tasks) = app.try_state::<Tasks>() else { return Vec::new() };
+    let list = tasks.0.lock().unwrap();
+    list.iter().filter(|t| !t.done).cloned().collect()
+}
+
+/// A plain to-do from the owner's phone (Telegram `/add`): the text as kept.
+pub fn add_from_phone(app: &AppHandle, text: &str) -> Option<String> {
+    let tasks = app.try_state::<Tasks>()?;
+    let list = add(app, &tasks, text.to_string(), None, false).ok()?;
+    list.last().map(|t| t.text.clone())
 }
 
 #[tauri::command]

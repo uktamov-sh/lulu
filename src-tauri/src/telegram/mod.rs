@@ -31,7 +31,7 @@ use crate::i18n::{t, tf};
 use crate::{island, log, pipe, recap, secrets};
 
 pub use self::core::{Draft, Ending};
-use self::core::{Book, Press, Start};
+use self::core::{Book, Command, Press, Start};
 
 const TOKEN_KEY: &str = "telegram-bot-token";
 const OWNER_KEY: &str = "telegram-owner";
@@ -280,6 +280,12 @@ fn on_update(app: &AppHandle, update: &Value) {
                 "text": format!("🐼 {}", t("LuLu is connected. Your agents' permission requests will arrive here.")),
             }));
             changed(app);
+        } else {
+            let from = message.pointer("/from/id").and_then(Value::as_i64).unwrap_or_default();
+            let command = tg.book.lock().unwrap().command(from, chat, private, text);
+            if let Some(command) = command {
+                run_command(app, chat, command);
+            }
         }
         return;
     }
@@ -323,6 +329,44 @@ fn on_update(app: &AppHandle, update: &Value) {
         body["text"] = json!(text);
     }
     send_later(app, "answerCallbackQuery", body);
+}
+
+/// Most open tasks listed in one message, and the characters Telegram takes.
+const MAX_LISTED: usize = 20;
+const MAX_REPLY: usize = 3800;
+
+/// The owner asked for `/status`, `/tasks` or `/add`: a plain message back.
+fn run_command(app: &AppHandle, chat: i64, command: Command) {
+    let open = crate::tasks::open_tasks(app);
+    let text = match command {
+        Command::Status => format!(
+            "🐼 {}
+{}
+{}",
+            t("LuLu is running."),
+            tf("Waiting for permission: {count}", &[("count", &pipe::waiting_count().to_string())]),
+            tf("Open tasks: {count}", &[("count", &open.len().to_string())]),
+        ),
+        Command::Tasks if open.is_empty() => t("No open tasks."),
+        Command::Tasks => {
+            let mut out = t("Open tasks:");
+            for task in open.iter().take(MAX_LISTED) {
+                out.push_str("
+• ");
+                out.push_str(&task.text);
+            }
+            out.chars().take(MAX_REPLY).collect()
+        }
+        Command::Add(text) if text.is_empty() => t("Write the task after the command: /add buy milk"),
+        Command::Add(text) => match crate::tasks::add_from_phone(app, &text) {
+            Some(added) => {
+                log::line("telegram: task added from the phone");
+                tf("Added: {task}", &[("task", &added)])
+            }
+            None => t("Could not add the task."),
+        },
+    };
+    send_later(app, "sendMessage", json!({ "chat_id": chat, "text": text }));
 }
 
 // ── Called by pipe.rs ─────────────────────────────────────────────────────────

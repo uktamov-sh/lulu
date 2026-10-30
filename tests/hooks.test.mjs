@@ -584,6 +584,15 @@ test("Allow pressed in Telegram takes the card down and the pill says it came fr
   assert.deepEqual(asked, []);
 });
 
+test("a command the relay found plain carries it to the card, so \"Always here\" can show; nothing else does", () => {
+  ask("r1", { tool_name: "Bash", tool_input: { command: "npm test" }, lulu_remember: "npm test" });
+  assert.equal(State.pendingApproval?.remember, "npm test");
+  State.pendingApproval = null;
+  ask("r2", { tool_name: "Bash", tool_input: { command: "rm -rf build" } });
+  assert.equal(State.pendingApproval?.remember, undefined);
+  assert.ok(!("remember" in State.pendingApproval));
+});
+
 test("Deny pressed in Telegram says so on the pill", () => {
   ask("r2");
   emit("telegram-decided", { requestId: "r2", allow: false });

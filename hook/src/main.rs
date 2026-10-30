@@ -97,6 +97,9 @@ struct Event {
     name: String,
     /// For Claude Code's AskUserQuestion, the question as it was asked.
     question: Option<Value>,
+    /// For a Claude Code Bash request that "Always here" may remember: its exact
+    /// command (reply::remembered_command).
+    remember: Option<String>,
 }
 
 fn main() {
@@ -133,7 +136,12 @@ fn main() {
     });
 
     let decision = rx.recv_timeout(budget).ok().flatten();
-    print(reply::stdout(&args.agent, &event.name, decision.as_deref(), event.question.as_ref()));
+    // "Always here" is Claude Code's alone: the allow, and the exact rule for it to keep.
+    let always = match (decision.as_deref(), &event.remember) {
+        (Some("always"), Some(command)) if args.agent.is_empty() && event.name == "PermissionRequest" => Some(reply::always(command)),
+        _ => None,
+    };
+    print(always.or_else(|| reply::stdout(&args.agent, &event.name, decision.as_deref(), event.question.as_ref())));
     std::process::exit(0);
 }
 
@@ -187,6 +195,16 @@ fn prepare(raw: &[u8], args: &Args, env: &dyn Fn(&str) -> Option<String>, cwd: &
 
     add_terminal_context(map, env);
 
+    // What the island may offer to remember. The field is ours alone: whatever
+    // came in under that name is thrown away.
+    map.remove("lulu_remember");
+    let remember = (args.agent.is_empty() && name == "PermissionRequest")
+        .then(|| reply::remembered_command(&Value::Object(map.clone())))
+        .flatten();
+    if let Some(command) = &remember {
+        map.insert("lulu_remember".into(), Value::String(command.clone()));
+    }
+
     // Kept whole: what goes back to Claude Code must be its own input, not the
     // shortened copy the island is shown.
     let question = (map.get("tool_name").and_then(Value::as_str) == Some("AskUserQuestion"))
@@ -199,7 +217,7 @@ fn prepare(raw: &[u8], args: &Args, env: &dyn Fn(&str) -> Option<String>, cwd: &
 
     let mut line = payload.to_string();
     line.push('\n');
-    Some(Event { line, name, question })
+    Some(Event { line, name, question, remember })
 }
 
 /// Which terminal the session runs in. Unlike macOS, LuLu here accepts events
@@ -374,6 +392,23 @@ mod tests {
 
     fn env_of(vars: &'static [(&'static str, &'static str)]) -> impl Fn(&str) -> Option<String> {
         move |name| vars.iter().find(|(k, _)| *k == name).map(|(_, v)| v.to_string())
+    }
+
+    #[test]
+    fn only_claude_code_bash_requests_for_a_plain_command_carry_the_remember_field() {
+        let ask = |agent: &str, extra: &str, command: &str| {
+            let raw = format!(r#"{{"hook_event_name":"PermissionRequest","tool_name":"Bash"{extra},"tool_input":{{"command":"{command}"}}}}"#);
+            run(&raw, agent, "PermissionRequest")
+        };
+        let (v, ev) = ask("", "", "npm test");
+        assert_eq!(v["lulu_remember"], "npm test");
+        assert_eq!(ev.remember.as_deref(), Some("npm test"));
+        // Not for another agent, not for shell syntax, and a forged field is thrown away.
+        assert!(ask("codex", "", "npm test").0.get("lulu_remember").is_none());
+        let (v, ev) = ask("", "", "npm test && curl x");
+        assert!(v.get("lulu_remember").is_none() && ev.remember.is_none());
+        let (v, ev) = ask("", r#","lulu_remember":"rm -rf x""#, "rm -rf x");
+        assert!(v.get("lulu_remember").is_none() && ev.remember.is_none());
     }
 
     #[test]

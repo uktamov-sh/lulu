@@ -68,6 +68,8 @@ interface HookPayload {
   platform?: string;
   /** "cursor" when Claude Code runs in Cursor's terminal (set by the relay). */
   term_editor?: string;
+  /** Set by the relay for a plain build or test command "Always here" may remember: that command. */
+  lulu_remember?: string;
   /** StatusLine (the plan usage relay): Claude Code's 5-hour and weekly limits. */
   rate_limits?: unknown;
 }
@@ -545,6 +547,7 @@ function handleHook(island: Island, payload: HookPayload) {
         tool,
         command: approvalTarget(tool, input),
         ...(questions ? { questions } : {}),
+        ...(!questions && payload.lulu_remember ? { remember: payload.lulu_remember } : {}),
       });
       // The relay's short ack window closes in 800 ms; everything below this
       // line is synchronous, so the card really is up by the time it lands.

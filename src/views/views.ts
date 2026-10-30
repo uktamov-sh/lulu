@@ -43,7 +43,7 @@ export interface ViewActions {
   /** The ↗ button: opens whatever the focused pill points at. */
   openTarget(): void;
   openUrl(url: string): void;
-  decide(d: "allow" | "deny"): void;
+  decide(d: "allow" | "deny" | "always"): void;
   /** Answers the question Claude Code asked: question text → chosen label. */
   answer(answers: Record<string, string | string[]>): void;
   /** Hands the pending request back to the terminal. */
@@ -537,7 +537,7 @@ function buildApproval(actions: ViewActions): ViewHost {
   // moments after a new request appears are ignored.
   let shownFor: string | null = null;
   let shownAt = 0;
-  const guarded = (d: "allow" | "deny") => () => {
+  const guarded = (d: "allow" | "deny" | "always") => () => {
     if (performance.now() - shownAt < CLICK_GUARD_MS) return;
     actions.decide(d);
   };
@@ -559,15 +559,19 @@ function buildApproval(actions: ViewActions): ViewHost {
       // is the command, the file path or the URL being authorised, not just the
       // name of the tool asking.
       code.textContent = State.pendingApproval?.command || State.pendingApproval?.tool || "…";
-      // Two buttons, built once. Rebuilding them between a mouse-down and a
-      // mouse-up would swallow the click, and there is nothing left to vary:
-      // "Always" is gone until the remembered-rules list exists to back it.
-      if (rowKey === "built") return;
-      rowKey = "built";
+      // The buttons are rebuilt only when they change: rebuilding them between a
+      // mouse-down and a mouse-up would swallow the click. "Always here" is there
+      // only for a command the relay found plain (a build or test of the project):
+      // Claude Code then keeps that exact command as its own rule for this project.
+      const remember = State.pendingApproval?.remember ?? "";
+      if (rowKey === `built:${remember}`) return;
+      rowKey = `built:${remember}`;
       clear(row);
+      const always = remember ? btn(tl("Always here"), "secondary", guarded("always")) : null;
+      if (always) always.title = remember;
       row.append(
-        btn(tl("Deny"), "secondary", guarded("deny"), "N"),
-        btn(tl("Allow"), "primary", guarded("allow"), "Y"),
+        ...[btn(tl("Deny"), "secondary", guarded("deny"), "N"), always, btn(tl("Allow"), "primary", guarded("allow"), "Y")]
+          .filter((b): b is HTMLElement => b !== null),
       );
     },
   };

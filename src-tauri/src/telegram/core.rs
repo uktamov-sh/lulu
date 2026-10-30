@@ -165,6 +165,15 @@ pub enum Start {
     Ignored,
 }
 
+/// What the owner may ask the bot in their private chat.
+#[derive(Debug, PartialEq, Eq)]
+pub enum Command {
+    Status,
+    Tasks,
+    /// A plain to-do; empty when nothing followed the command.
+    Add(String),
+}
+
 /// What a button press does.
 #[derive(Debug, PartialEq, Eq)]
 pub enum Press {
@@ -252,6 +261,23 @@ impl Book {
             self.pairing = None;
         }
         Start::Ignored
+    }
+
+    /// `/status`, `/tasks` or `/add <text>` (also `/add@bot …`) from the owner, in
+    /// their own private chat; from anyone else, or anywhere else, nothing.
+    pub fn command(&self, from: i64, chat: i64, private: bool, text: &str) -> Option<Command> {
+        if self.owner != Some(from) || from != chat || !private {
+            return None;
+        }
+        let text = text.trim();
+        let (word, rest) = text.split_once(char::is_whitespace).unwrap_or((text, ""));
+        let word = word.split_once('@').map_or(word, |(w, _)| w).to_ascii_lowercase();
+        match word.as_str() {
+            "/status" => Some(Command::Status),
+            "/tasks" => Some(Command::Tasks),
+            "/add" => Some(Command::Add(rest.trim().to_string())),
+            _ => None,
+        }
     }
 
     /// A card about to be sent. Returns its buttons.
@@ -450,6 +476,30 @@ mod tests {
         }
         assert_eq!(book.pairing_code(1), None);
         assert_eq!(book.on_message(OWNER, true, "/start ABCD2345", 2), Start::Ignored, "burnt");
+    }
+
+    #[test]
+    fn only_the_owner_in_their_private_chat_gives_commands() {
+        let book = paired();
+        let ask = |from: i64, chat: i64, private: bool, text: &str| book.command(from, chat, private, text);
+        assert_eq!(ask(OWNER, OWNER, true, "/status"), Some(Command::Status));
+        assert_eq!(ask(OWNER, OWNER, true, "/STATUS@lulu_bot"), Some(Command::Status));
+        assert_eq!(ask(OWNER, OWNER, true, " /tasks "), Some(Command::Tasks));
+        assert_eq!(ask(OWNER, OWNER, true, "/add buy milk  and bread "), Some(Command::Add("buy milk  and bread".into())));
+        assert_eq!(ask(OWNER, OWNER, true, "/add@lulu_bot call Ali"), Some(Command::Add("call Ali".into())));
+        assert_eq!(ask(OWNER, OWNER, true, "/add"), Some(Command::Add(String::new())));
+        assert_eq!(ask(OWNER, OWNER, true, "/add
+second line"), Some(Command::Add("second line".into())));
+        // Not commands.
+        for text in ["", "status", "/statusx", "/addx milk", "hello /status", "/start ABCD2345", "/run npm test"] {
+            assert_eq!(ask(OWNER, OWNER, true, text), None, "{text:?}");
+        }
+        // Nobody else, and nowhere else: a stranger, a group the owner is in, a forged chat.
+        assert_eq!(ask(99, 99, true, "/status"), None);
+        assert_eq!(ask(OWNER, -100, false, "/status"), None);
+        assert_eq!(ask(OWNER, -100, true, "/status"), None);
+        assert_eq!(ask(OWNER, OWNER, false, "/status"), None);
+        assert_eq!(Book::default().command(OWNER, OWNER, true, "/status"), None, "unpaired");
     }
 
     #[test]
